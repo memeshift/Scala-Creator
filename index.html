@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scala File Creator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
+
+  :root {
+    --ls-orange:   #dc6d00;
+    --ls-teal:     #2a5353;
+    --ls-cream:    #f8dda7;
+    --ls-ink:      #151916;
+
+    --orange-600:  #b85a00;
+    --orange-500:  #dc6d00;
+    --orange-400:  #ef8a25;
+    --orange-300:  #f6ab5e;
+    --orange-200:  #fac892;
+    --orange-100:  #fde3c5;
+
+    --teal-800:    #122a2a;
+    --teal-700:    #1d3c3c;
+    --teal-600:    #234747;
+    --teal-500:    #2a5353;
+    --teal-400:    #3d6f6f;
+    --teal-300:    #6b9494;
+    --teal-200:    #a6c2c2;
+
+    --ink-900:     #151916;
+    --ink-700:     #2f3531;
+    --ink-500:     #565d57;
+    --ink-400:     #7c837c;
+
+    --bg:          var(--ls-ink);
+    --surface:     #1f2521;
+    --surface-2:   #282f2a;
+
+    --fg:          var(--ls-cream);
+    --fg-muted:    #cdbd95;
+    --fg-faint:    #8f897a;
+    --fg-on-cream: var(--ls-ink);
+
+    --heading:     var(--ls-orange);
+    --primary:     var(--ls-orange);
+    --primary-hover: var(--orange-400);
+    --secondary:   var(--ls-teal);
+
+    --border:      rgba(248,221,167,0.14);
+    --border-strong: rgba(248,221,167,0.30);
+    --ring:        var(--orange-400);
+
+    --link:        var(--orange-300);
+    --link-hover:  var(--orange-200);
+
+    --danger:      #a83a1e;
+    --danger-soft: #d4694e;
+
+    --font-sans:   'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --font-serif:  'Lora', Georgia, 'Times New Roman', serif;
+
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   16px;
+    --radius-btn:  5px;
+
+    --shadow-sm:   0 2px 8px rgba(0,0,0,0.40);
+    --shadow-md:   0 8px 22px rgba(0,0,0,0.46);
+    --shadow-ring: 0 0 0 3px rgba(239,138,37,0.45);
+
+    --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+    --dur:         220ms;
+    --dur-fast:    130ms;
+
+    --space-2: 8px; --space-3: 12px; --space-4: 16px;
+    --space-5: 24px; --space-6: 32px; --space-7: 48px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-serif);
+    font-size: 1.0625rem;
+    line-height: 1.62;
+    min-height: 100vh;
+    padding: clamp(1.5rem, 5vw, 4rem);
+  }
+
+  .skip-link {
+    position: absolute; left: -9999px; top: auto;
+    background: var(--primary); color: var(--fg-on-cream);
+    padding: var(--space-3) var(--space-4);
+    font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600;
+    border-radius: var(--radius-btn); z-index: 100; text-decoration: none;
+  }
+  .skip-link:focus { left: var(--space-4); top: var(--space-4); }
+
+  header { margin-bottom: var(--space-7);  max-width: 800px; }
+  h1 {
+    font-family: var(--font-sans); font-weight: 700;
+    font-size: clamp(2rem, 3.4vw, 3rem);
+    line-height: 1.1; letter-spacing: -0.02em; color: var(--heading);
+  }
+  .subtitle {
+    font-family: var(--font-serif); font-style: italic;
+    color: var(--fg-muted); margin-top: var(--space-2); font-size: 1.05rem;
+  }
+  .intro {
+    color: var(--fg-muted); margin-top: var(--space-4);
+    font-size: 0.9375rem; line-height: 1.55; max-width: 62ch;
+  }
+
+  main { max-width: 100%; overflow: hidden; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
+  .full { grid-column: 1 / -1; }
+  @media (max-width: 780px) { .grid { grid-template-columns: 1fr; } .full { grid-column: auto; } }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow-sm);
+    min-width: 0;
+  }
+  .panel-heading {
+    font-family: var(--font-sans); font-weight: 600; font-size: 0.78rem;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--fg-faint); margin-bottom: var(--space-4);
+  }
+
+  #drop {
+    border: 1px dashed var(--border-strong); border-radius: var(--radius-lg);
+    background: var(--surface); padding: var(--space-7) var(--space-5);
+    text-align: center; cursor: pointer;
+    transition: border-color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
+  }
+  #drop:hover, #drop:focus-within, #drop.over { border-color: var(--primary); background: var(--surface-2); }
+  #drop .drop-label { font-family: var(--font-sans); font-weight: 600; font-size: 1.15rem; color: var(--fg); }
+  #drop .drop-hint { color: var(--fg-faint); font-size: 0.85rem; margin-top: var(--space-2); }
+  #fileInput { display: none; }
+
+  label {
+    display: block; font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-faint); margin-bottom: var(--space-2);
+  }
+  input[type="text"], input[type="number"], textarea {
+    background: var(--bg); border: 1px solid var(--border-strong); color: var(--fg);
+    font-family: var(--font-serif); font-size: 1rem;
+    padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); width: 100%;
+    transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--ring); box-shadow: var(--shadow-ring); }
+  textarea { min-height: 5rem; resize: vertical; line-height: 1.55; }
+  input[type="number"] { font-family: var(--font-sans); width: 8ch; -moz-appearance: textfield; }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
+
+  .field { margin-bottom: var(--space-5); }
+  .field-row { display: flex; gap: var(--space-5); flex-wrap: wrap; align-items: end; justify-content: flex-end; }
+  .field-inline { flex: 0 0 auto; }
+  .field-grow { flex: 1 1 auto; min-width: 200px; }
+
+  /* --- Toggle switch --- */
+  .toggle-row {
+    display: flex; align-items: center; gap: var(--space-3);
+    justify-content: flex-end;
+  }
+  .toggle {
+    position: relative;
+    width: 44px; height: 24px;
+    flex-shrink: 0;
+  }
+  .toggle input {
+    position: absolute; opacity: 0; width: 100%; height: 100%;
+    margin: 0; cursor: pointer; z-index: 1;
+  }
+  .toggle-track {
+    position: absolute; inset: 0;
+    background: var(--ink-700);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    transition: background var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+  }
+  .toggle-thumb {
+    position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px;
+    background: var(--fg-muted);
+    border-radius: 50%;
+    transition: transform var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
+    pointer-events: none;
+  }
+  .toggle input:checked ~ .toggle-track {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+  .toggle input:checked ~ .toggle-thumb {
+    transform: translateX(20px);
+    background: #1d1208;
+  }
+  .toggle input:focus-visible ~ .toggle-track {
+    box-shadow: var(--shadow-ring);
+  }
+  .toggle-label {
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    color: var(--fg-muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-desc {
+    font-family: var(--font-serif);
+    font-size: 0.8125rem;
+    color: var(--fg-faint);
+    margin-top: var(--space-1);
+    margin-bottom: var(--space-3);
+  }
+
+  .required-marker {
+    color: var(--danger-soft); font-weight: 400; letter-spacing: 0;
+    text-transform: none; font-style: italic; font-size: 0.7rem; margin-left: 0.3em;
+  }
+  .validation-msg {
+    font-family: var(--font-serif); font-size: 0.8125rem;
+    color: var(--danger-soft); margin-top: var(--space-2); min-height: 1.2em;
+  }
+
+  .btn {
+    font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600;
+    border: none; padding: var(--space-3) var(--space-5); border-radius: var(--radius-btn);
+    cursor: pointer; min-height: 44px; min-width: 44px;
+    transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:focus-visible { outline: none; box-shadow: var(--shadow-ring); }
+
+  .btn-primary { background: var(--primary); color: #1d1208; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-primary:disabled { background: var(--ink-700); color: var(--ink-400); cursor: not-allowed; transform: none; }
+
+  .btn-teal { background: var(--teal-500); color: var(--ls-cream); }
+  .btn-teal:hover { background: var(--teal-400); }
+  .btn-teal:disabled { background: var(--ink-700); color: var(--ink-400); cursor: not-allowed; transform: none; }
+
+  .btn-ghost { background: transparent; color: var(--fg-muted); border: 1px solid var(--border-strong); }
+  .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-sm { font-size: 0.75rem; padding: var(--space-2) var(--space-3); min-height: 36px; }
+
+  /* --- Tone rows --- */
+  .tone-row {
+    display: flex; align-items: center; gap: var(--space-3);
+    padding: var(--space-3) var(--space-2); border-bottom: 1px solid var(--border);
+    font-size: 0.875rem; transition: background var(--dur-fast) var(--ease-out);
+  }
+  .tone-row:last-child { border-bottom: none; }
+  .tone-row:hover { background: var(--surface-2); }
+  .tone-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.82rem; }
+  .tone-hz { color: var(--orange-300); white-space: nowrap; font-family: var(--font-sans); font-size: 0.82rem; }
+  .tone-cents { color: var(--fg-faint); white-space: nowrap; font-family: var(--font-sans); font-size: 0.82rem; min-width: 8ch; text-align: right; }
+  .tone-root-btn {
+    background: transparent; border: 1px solid var(--border-strong); color: var(--fg-faint);
+    font-family: var(--font-sans); font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em;
+    padding: 2px 8px; border-radius: 99px; cursor: pointer; white-space: nowrap;
+    transition: all var(--dur-fast) var(--ease-out); min-height: 28px;
+  }
+  .tone-root-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .tone-root-btn:focus-visible { outline: none; box-shadow: var(--shadow-ring); }
+  .tone-root-btn[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #1d1208; }
+  .tone-row.failed .tone-hz { color: var(--danger-soft); }
+  .tone-override {
+    font-family: var(--font-sans); font-size: 0.8rem; background: var(--bg);
+    border: 1px solid var(--border-strong); color: var(--fg); padding: 4px 8px;
+    border-radius: var(--radius-sm); width: 9ch;
+  }
+  .tone-override:focus { outline: none; border-color: var(--ring); box-shadow: var(--shadow-ring); }
+
+  .tone-play-btn {
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; border: none;
+    background: var(--primary); color: #1d1208; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; line-height: 1; padding: 0;
+    transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  }
+  .tone-play-btn::before { content: '\25B6'; transform: translateX(1px); }
+  .tone-play-btn.playing::before { content: '\25A0'; transform: none; }
+  .tone-play-btn.playing { background: var(--orange-300); }
+  .tone-play-btn:hover { background: var(--primary-hover); }
+  .tone-play-btn:active { transform: scale(0.92); }
+  .tone-play-btn:focus-visible { outline: none; box-shadow: var(--shadow-ring); }
+
+  .tone-hz-edit { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+  .tone-hz-input {
+    font-family: var(--font-sans); font-size: 0.82rem; color: var(--orange-300);
+    background: var(--bg); border: 1px solid var(--border-strong);
+    padding: 4px 6px; border-radius: var(--radius-sm); width: 10ch; text-align: right;
+    transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  }
+  .tone-hz-input:focus { outline: none; border-color: var(--ring); box-shadow: var(--shadow-ring); }
+  .tone-hz-unit { font-family: var(--font-sans); font-size: 0.72rem; color: var(--fg-faint); }
+  .empty-state { color: var(--fg-faint); font-style: italic; font-size: 0.9rem; padding: var(--space-4) 0; }
+
+  .scl-preview {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: var(--space-4); font-family: var(--font-sans); font-size: 0.78rem;
+    line-height: 1.5; color: var(--fg-muted); overflow-x: auto; white-space: pre; min-height: 4rem;
+  }
+
+  /* --- Collapsible tone generator --- */
+  details.tone-gen { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); margin-top: var(--space-3); }
+  details.tone-gen summary {
+    font-family: var(--font-sans); font-size: 0.82rem; font-weight: 600; color: var(--fg-muted);
+    cursor: pointer; padding: var(--space-3) var(--space-4); list-style: none;
+    display: flex; align-items: center; gap: var(--space-3); min-height: 44px;
+    transition: color var(--dur-fast) var(--ease-out); user-select: none;
+  }
+  details.tone-gen summary::-webkit-details-marker { display: none; }
+  details.tone-gen summary::before {
+    content: '→'; display: inline-block;
+    transition: transform var(--dur) var(--ease-out); color: var(--fg-faint);
+  }
+  details.tone-gen[open] summary::before { transform: rotate(90deg); }
+  details.tone-gen summary:hover { color: var(--primary); }
+  details.tone-gen summary:focus-visible { outline: none; box-shadow: var(--shadow-ring); border-radius: var(--radius-md); }
+
+  .tone-gen-body { padding: var(--space-4); padding-top: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+  .gen-row { display: flex; align-items: flex-start; gap: var(--space-4); flex-wrap: wrap; }
+
+  /* --- Hz Wheel --- */
+  .hz-wheel-wrap {
+    flex: 1 1 240px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .hz-wheel {
+    width: 100%;
+    height: 52px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    cursor: ew-resize;
+    touch-action: none;
+    background: var(--bg);
+    display: block;
+  }
+  .hz-wheel:focus-visible { outline: none; box-shadow: var(--shadow-ring); }
+  .hz-wheel-hint {
+    font-family: var(--font-sans); font-size: 0.68rem; color: var(--fg-faint);
+    text-align: center;
+  }
+
+  .hz-input-wrap {
+    display: flex; align-items: center; gap: 4px;
+    height: 52px;
+  }
+  .hz-input {
+    font-family: var(--font-sans); font-size: 1.4rem; font-weight: 700;
+    color: var(--orange-300); background: transparent; border: none; border-bottom: 1px solid var(--border);
+    width: 10ch; text-align: right; padding: 2px 0;
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+  .hz-input:focus { outline: none; border-color: var(--ring); }
+  .hz-unit { font-family: var(--font-sans); font-size: 0.8rem; color: var(--fg-faint); }
+
+  .wave-select { display: flex; gap: 2px; border-radius: var(--radius-btn); overflow: hidden; border: 1px solid var(--border-strong); }
+  .wave-opt {
+    font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600;
+    background: transparent; color: var(--fg-faint); border: none;
+    padding: var(--space-2) var(--space-3); cursor: pointer;
+    transition: all var(--dur-fast) var(--ease-out); min-height: 36px;
+  }
+  .wave-opt:hover { color: var(--fg); }
+  .wave-opt:focus-visible { outline: none; box-shadow: var(--shadow-ring); }
+  .wave-opt[aria-checked="true"] { background: var(--primary); color: #1d1208; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <header>
+    <h1>Scala File Creator</h1>
+    <p class="subtitle">A tool to create your own tunings from samples</p>
+    <p class="intro">Drop audio files of individual tones. Each file's fundamental frequency is detected and assembled into a downloadable Scala tuning file. The lowest frequency becomes the root — click any tone to set it as the new root. Use the tone generator to confirm accuracy of the analysis by ear.</p>
+  </header>
+
+  <main id="main">
+    <div class="grid">
+
+      <div class="full">
+        <div id="drop" role="button" tabindex="0" aria-label="Drop audio files here or click to choose files">
+          <div class="drop-label">Drop audio files here</div>
+          <div class="drop-hint">or click to choose — WAV, FLAC, MP3, M4A, AIFF, AIF, AAC accepted</div>
+          <input type="file" id="fileInput" accept="audio/*,.wav,.flac,.ogg,.mp3,.m4a,.aiff,.aif,.aac" multiple aria-label="Choose audio files">
+        </div>
+      </div>
+
+      <div class="full panel">
+        <div class="panel-heading" id="settings-heading">Settings</div>
+        <div role="group" aria-labelledby="settings-heading">
+          <div class="field">
+            <label for="scaleName">Scale name</label>
+            <input type="text" id="scaleName" value="Untitled scale">
+          </div>
+          <div class="field">
+            <label for="provenance">
+              Description
+              <span class="required-marker" aria-hidden="true">(required)</span>
+            </label>
+            <textarea id="provenance" required
+              placeholder="Instruments/sounds sampled, origin, person recording, location, tuning system, etc."
+              aria-describedby="provenance-hint provenance-error"
+            ></textarea>
+            <div id="provenance-hint" class="sr-only">Required. Describe the origin of this tuning and its sources.</div>
+            <div id="provenance-error" class="validation-msg" role="alert" aria-live="polite"></div>
+          </div>
+          <div class="field">
+            <label id="octaveFoldLabel">Octave Folding</label>
+            <div class="toggle-desc">When enabled, all tones are folded into a single 1200-cent octave above the root.</div>
+            <div class="toggle-row">
+              <div class="toggle">
+                <input type="checkbox" id="octaveFold" role="switch" aria-checked="false" aria-labelledby="octaveFoldLabel">
+                <span class="toggle-track" aria-hidden="true"></span>
+                <span class="toggle-thumb" aria-hidden="true"></span>
+              </div>
+              <span class="toggle-label" id="octaveFoldState">Off</span>
+            </div>
+          </div>
+          <div class="field">
+            <label id="freqRangeLabel">Detection Range</label>
+            <div class="toggle-desc">Sets the frequency bounds for pitch detection. Tones with fundamentals outside this range will not be detected. Narrow the range if detection is picking up harmonics instead of fundamentals, or widen it to capture very low or high tones.</div>
+            <div class="field-row">
+              <div class="field-inline">
+                <label for="minHz">Min Hz</label>
+                <input type="number" id="minHz" value="30" min="1" max="20000" step="1">
+              </div>
+              <div class="field-inline">
+                <label for="maxHz">Max Hz</label>
+                <input type="number" id="maxHz" value="4000" min="1" max="20000" step="1">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" role="region" aria-labelledby="tones-heading">
+        <div class="panel-heading" id="tones-heading">Detected tones</div>
+        <div class="toggle-desc">Pitch detection isn't always exact — it can lock onto a harmonic instead of the fundamental pitch. To check by ear, preview a tone, dial the reference tone generator to its Hz, and play both: a slow wavering pulse means they're close but not matched. Nudge the Hz until the pulse disappears.</div>
+        <div id="results" aria-live="polite"><p class="empty-state">Nothing analyzed yet.</p></div>
+
+        <details class="tone-gen">
+          <summary>Reference tone generator</summary>
+          <div class="tone-gen-body">
+            <div class="gen-row">
+              <div class="hz-wheel-wrap">
+                <canvas id="hzWheel" class="hz-wheel" tabindex="0"
+                  role="slider" aria-label="Frequency wheel"
+                  aria-valuemin="20" aria-valuemax="8000" aria-valuenow="60"
+                  aria-valuetext="60.000 Hz"></canvas>
+                <div class="hz-wheel-hint">drag to sweep — scroll or shift+drag to fine-tune</div>
+              </div>
+              <div>
+                <div class="hz-input-wrap">
+                  <input type="text" id="hzInput" class="hz-input" value="60.000"
+                    inputmode="decimal" aria-label="Frequency in Hz">
+                  <span class="hz-unit">Hz</span>
+                </div>
+              </div>
+            </div>
+            <div class="gen-row">
+              <div class="wave-select" role="radiogroup" aria-label="Waveform type">
+                <button type="button" class="wave-opt" role="radio" aria-checked="false" data-wave="sine">sine</button>
+                <button type="button" class="wave-opt" role="radio" aria-checked="true" data-wave="triangle">triangle</button>
+                <button type="button" class="wave-opt" role="radio" aria-checked="false" data-wave="sawtooth">sawtooth</button>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm" id="toneToggle" aria-pressed="false">Play tone</button>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div class="panel" role="region" aria-labelledby="preview-heading">
+        <div class="panel-heading" id="preview-heading">.scl preview</div>
+        <pre class="scl-preview" id="preview" tabindex="0" aria-label="Scala file preview">—</pre>
+      </div>
+
+      <div class="full" style="display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn btn-teal" id="downloadBtn" disabled aria-describedby="download-hint">Download .scl</button>
+        <span id="download-hint" class="empty-state" style="padding: 0;"></span>
+      </div>
+
+    </div>
+  </main>
+
+  <div aria-live="assertive" class="sr-only" id="srAnnounce"></div>
+
+<script>
+// --- DOM ---
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('fileInput');
+const resultsEl = document.getElementById('results');
+const previewEl = document.getElementById('preview');
+const downloadBtn = document.getElementById('downloadBtn');
+const downloadHint = document.getElementById('download-hint');
+const scaleNameEl = document.getElementById('scaleName');
+const provenanceEl = document.getElementById('provenance');
+const provenanceError = document.getElementById('provenance-error');
+const minHzEl = document.getElementById('minHz');
+const maxHzEl = document.getElementById('maxHz');
+const hzWheel = document.getElementById('hzWheel');
+const hzInput = document.getElementById('hzInput');
+const toneToggle = document.getElementById('toneToggle');
+const octaveFoldEl = document.getElementById('octaveFold');
+const srAnnounce = document.getElementById('srAnnounce');
+
+// --- State ---
+let allDetected = [];
+let tones = [];
+let rootIdx = null;
+let overrides = {};
+
+// --- Tone generator state ---
+let genCtx = null, genOsc = null, genGain = null;
+let genPlaying = false;
+let genWave = 'triangle';
+let genHz = 60;
+const GEN_MIN = 20, GEN_MAX = 8000;
+
+// --- Sample preview state (separate context so it can sound alongside the generator) ---
+let previewCtx = null;
+let previewSource = null;
+let previewingOrig = null;
+
+// --- Drop zone ---
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+['dragover','dragenter'].forEach(ev =>
+  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev =>
+  drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+
+scaleNameEl.addEventListener('input', renderPreview);
+provenanceEl.addEventListener('input', () => { validateProvenance(); updateDownloadState(); renderPreview(); });
+minHzEl.addEventListener('change', reanalyze);
+maxHzEl.addEventListener('change', reanalyze);
+octaveFoldEl.addEventListener('change', () => {
+  octaveFoldEl.setAttribute('aria-checked', octaveFoldEl.checked);
+  document.getElementById('octaveFoldState').textContent = octaveFoldEl.checked ? 'On' : 'Off';
+  renderResults();
+  renderPreview();
+  announce(octaveFoldEl.checked ? 'Octave folding enabled' : 'Octave folding disabled');
+});
+
+// --- File handling ---
+let rawBuffers = [];
+
+async function handleFiles(fileList) {
+  const validExts = /\.(wav|flac|ogg|mp3|m4a|aac|aiff?)$/i;
+  const files = [...fileList].filter(f => validExts.test(f.name) || f.type.startsWith('audio/'));
+  if (!files.length) return;
+
+  stopPreview();
+  rawBuffers = []; allDetected = []; tones = []; rootIdx = null; overrides = {};
+  resultsEl.innerHTML = '<p class="empty-state">Analyzing…</p>';
+  announce('Analyzing files');
+
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  for (const file of files) {
+    try {
+      const buf = await file.arrayBuffer();
+      const audio = await ctx.decodeAudioData(buf);
+      rawBuffers.push({ name: file.name, audioBuffer: audio });
+      const freq = detectPitch(audio.getChannelData(0), audio.sampleRate);
+      allDetected.push({ name: file.name, freq });
+    } catch (err) {
+      allDetected.push({ name: file.name, freq: null });
+    }
+  }
+  ctx.close();
+
+  rebuildTones(); renderResults(); renderPreview(); updateDownloadState();
+  const count = tones.length;
+  const failed = allDetected.length - count;
+  let msg = `Detected ${count} tone${count !== 1 ? 's' : ''}`;
+  if (failed > 0) msg += `, ${failed} file${failed !== 1 ? 's' : ''} undetected`;
+  announce(msg);
+}
+
+async function reanalyze() {
+  if (!rawBuffers.length) return;
+  allDetected = [];
+  for (const rb of rawBuffers) {
+    const freq = detectPitch(rb.audioBuffer.getChannelData(0), rb.audioBuffer.sampleRate);
+    allDetected.push({ name: rb.name, freq });
+  }
+  rebuildTones(); renderResults(); renderPreview(); updateDownloadState();
+}
+
+function rebuildTones() {
+  tones = allDetected
+    .map((d, i) => ({ ...d, origIdx: i }))
+    .filter(d => { const f = overrides[d.name] ?? d.freq; return f && isFinite(f); })
+    .map(d => ({ ...d, freq: overrides[d.name] ?? d.freq }))
+    .sort((a, b) => a.freq - b.freq);
+  if (rootIdx !== null && rootIdx >= tones.length) rootIdx = null;
+}
+
+// --- Pitch detection (McLeod Pitch Method, optimized for struck metallic tones) ---
+function detectPitch(samples, sampleRate) {
+  // 1. Find the sustained energy region (skip the attack transient)
+  //    Use a 100ms RMS window — wider than before to favour the sustained
+  //    ringing over the initial mallet strike.
+  const scanWin = Math.floor(sampleRate * 0.1);
+  const scanStep = Math.floor(scanWin / 4);
+  let peakIdx = 0, peakRms = 0;
+  for (let i = 0; i < samples.length - scanWin; i += scanStep) {
+    let sum = 0;
+    for (let j = i; j < i + scanWin; j++) sum += samples[j] * samples[j];
+    const r = Math.sqrt(sum / scanWin);
+    if (r > peakRms) { peakRms = r; peakIdx = i; }
+  }
+
+  // 2. Take analysis window 40ms after energy peak (clear of the transient),
+  //    200ms long for good low-frequency resolution.
+  const offset = Math.floor(sampleRate * 0.04);
+  const sliceLen = Math.min(Math.floor(sampleRate * 0.2), samples.length - peakIdx - offset);
+  if (sliceLen < 1) return null;
+  const start = peakIdx + offset;
+  const buf = samples.slice(start, start + sliceLen);
+  const SIZE = buf.length;
+
+  // 3. RMS gate — reject near-silence
+  let rms = 0;
+  for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+  rms = Math.sqrt(rms / SIZE);
+  if (rms < 0.0005) return null;
+
+  // 4. Compute the full Normalized Square Difference Function (NSDF)
+  const minFreq = Math.max(1, parseInt(minHzEl.value) || 30);
+  const maxFreq = Math.min(20000, parseInt(maxHzEl.value) || 4000);
+  const maxLag = Math.min(Math.floor(sampleRate / minFreq), Math.floor(SIZE / 2));
+  const minLag = Math.max(1, Math.floor(sampleRate / maxFreq));
+
+  const nsdf = new Float32Array(maxLag + 1);
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let corr = 0, normA = 0, normB = 0;
+    for (let i = 0; i < SIZE - lag; i++) {
+      corr += buf[i] * buf[i + lag];
+      normA += buf[i] * buf[i];
+      normB += buf[i + lag] * buf[i + lag];
+    }
+    nsdf[lag] = (2 * corr) / (normA + normB || 1);
+  }
+
+  // 5. Find all positive NSDF peaks (local maxima where nsdf > 0)
+  const peaks = [];
+  for (let lag = minLag + 1; lag < maxLag; lag++) {
+    if (nsdf[lag] > 0 && nsdf[lag] >= nsdf[lag - 1] && nsdf[lag] >= nsdf[lag + 1]) {
+      peaks.push({ lag, val: nsdf[lag] });
+    }
+  }
+  if (!peaks.length) return null;
+
+  // 6. Peak selection: global maximum.
+  //    For inharmonic metallophones (gamelan), the fundamental's NSDF
+  //    peak is reliably the strongest. Unlike harmonic instruments,
+  //    subharmonic octave errors don't occur because the partials are
+  //    not at integer multiples — so no harmonic guard is needed.
+  peaks.sort((a, b) => b.val - a.val);
+  const chosen = peaks[0];
+  if (chosen.val < 0.3) return null;
+
+  // 7. Parabolic interpolation around the chosen NSDF peak
+  //    for sub-sample precision (interpolate NSDF, not raw correlation)
+  const L = chosen.lag;
+  if (L > minLag && L < maxLag) {
+    const y0 = nsdf[L - 1], y1 = nsdf[L], y2 = nsdf[L + 1];
+    const denom = y0 - 2 * y1 + y2;
+    if (denom) {
+      const shift = 0.5 * (y0 - y2) / denom;
+      return sampleRate / (L + shift);
+    }
+  }
+  return sampleRate / L;
+}
+
+function centsAbove(freq, root) { return 1200 * Math.log2(freq / root); }
+function foldCents(c) { return ((c % 1200) + 1200) % 1200; }
+
+// --- Render results ---
+function renderResults() {
+  if (!allDetected.length) { resultsEl.innerHTML = '<p class="empty-state">Nothing analyzed yet.</p>'; return; }
+  const rootFreq = getRootFreq();
+  const fold = octaveFoldEl.checked;
+  let html = '';
+  tones.forEach((d, i) => {
+    const isRoot = (rootIdx !== null) ? (i === rootIdx) : (i === 0);
+    const rawC = rootFreq ? centsAbove(d.freq, rootFreq) : 0;
+    const c = fold ? foldCents(rawC) : rawC;
+    const isOverridden = overrides[d.name] !== undefined;
+    const playing = previewingOrig === d.origIdx;
+    html += `<div class="tone-row" data-tone-idx="${i}">
+      <button type="button" class="tone-play-btn ${playing ? 'playing' : ''}"
+        aria-pressed="${playing}" aria-label="${playing ? 'Stop' : 'Play'} ${esc(d.name)}"
+        data-action="preview" data-orig="${d.origIdx}" data-name="${esc(d.name)}"></button>
+      <button type="button" class="tone-root-btn" aria-pressed="${isRoot}"
+        aria-label="Set ${esc(d.name)} as root" data-action="set-root" data-idx="${i}">${isRoot ? '1/1' : 'set 1/1'}</button>
+      <span class="tone-name" title="${esc(d.name)}">${esc(d.name)}${isOverridden ? ' (manual)' : ''}</span>
+      <span class="tone-hz-edit">
+        <input type="number" class="tone-hz-input" value="${d.freq.toFixed(3)}" min="1" step="0.001"
+          aria-label="Frequency in Hz for ${esc(d.name)}" data-action="override" data-name="${esc(d.name)}">
+        <span class="tone-hz-unit">Hz</span>
+      </span>
+      <span class="tone-cents">${c.toFixed(2)} ¢</span>
+    </div>`;
+  });
+  const failed = allDetected
+    .map((d, i) => ({ ...d, origIdx: i }))
+    .filter(d => { const f = overrides[d.name] ?? d.freq; return !f || !isFinite(f); });
+  failed.forEach((d, fi) => {
+    const inputId = `override-${fi}`;
+    const playing = previewingOrig === d.origIdx;
+    html += `<div class="tone-row failed">
+      <button type="button" class="tone-play-btn ${playing ? 'playing' : ''}"
+        aria-pressed="${playing}" aria-label="${playing ? 'Stop' : 'Play'} ${esc(d.name)}"
+        data-action="preview" data-orig="${d.origIdx}" data-name="${esc(d.name)}"></button>
+      <span class="tone-name" title="${esc(d.name)}">${esc(d.name)}</span>
+      <span class="tone-hz">no pitch found</span>
+      <label class="sr-only" for="${inputId}">Manual Hz for ${esc(d.name)}</label>
+      <input type="number" class="tone-override" id="${inputId}"
+        placeholder="Hz" min="1" step="0.001"
+        aria-label="Manual Hz override for ${esc(d.name)}"
+        data-action="override" data-name="${esc(d.name)}">
+    </div>`;
+  });
+  resultsEl.innerHTML = html;
+}
+
+// Event delegation for dynamically rendered tone rows.
+// Keeps user-controlled filenames out of any executable context.
+resultsEl.addEventListener('click', e => {
+  const rootBtn = e.target.closest('[data-action="set-root"]');
+  if (rootBtn) { setRoot(Number(rootBtn.dataset.idx)); return; }
+  const playBtn = e.target.closest('[data-action="preview"]');
+  if (playBtn) { togglePreview(Number(playBtn.dataset.orig)); return; }
+});
+resultsEl.addEventListener('change', e => {
+  const input = e.target.closest('[data-action="override"]');
+  if (input) applyOverride(input.dataset.name, input.value);
+});
+
+function getRootFreq() {
+  if (!tones.length) return null;
+  return tones[rootIdx ?? 0]?.freq ?? tones[0].freq;
+}
+
+function setRoot(idx) {
+  rootIdx = idx;
+  renderResults(); renderPreview();
+  announce(`Root set to ${tones[idx].name}`);
+}
+
+function applyOverride(name, val) {
+  const hz = parseFloat(val);
+  if (hz && isFinite(hz) && hz > 0) overrides[name] = hz;
+  else delete overrides[name];
+  rebuildTones(); renderResults(); renderPreview(); updateDownloadState();
+}
+
+// --- .scl ---
+function buildScl() {
+  if (!tones.length) return '';
+  const rootFreq = getRootFreq();
+  const name = scaleNameEl.value.trim() || 'Untitled scale';
+  const prov = provenanceEl.value.trim();
+  const fold = octaveFoldEl.checked;
+  const ri = rootIdx ?? 0;
+  let degrees = tones.filter((_, i) => i !== ri).map(t => centsAbove(t.freq, rootFreq));
+  if (fold) {
+    degrees = degrees.map(foldCents);
+    // deduplicate near-identical values (within 0.5 cents) after folding
+    degrees.sort((a, b) => a - b);
+    degrees = degrees.filter((c, i) => i === 0 || Math.abs(c - degrees[i - 1]) > 0.5);
+    // add the octave (1200 cents) as the period
+    degrees.push(1200);
+  }
+  const lines = [];
+  lines.push(`! ${slug(name)}.scl`);
+  lines.push(`!`);
+  if (prov) { prov.split('\n').forEach(l => lines.push(`! ${l}`)); lines.push(`!`); }
+  if (fold) lines.push(`! Octave-folded`);
+  lines.push(`! Root (1/1): ${rootFreq.toFixed(3)} Hz — ${tones[ri].name}`);
+  lines.push(`!`);
+  lines.push(name);
+  lines.push(` ${degrees.length}`);
+  lines.push(`!`);
+  degrees.forEach(c => lines.push(` ${c.toFixed(5)}`));
+  return lines.join('\n') + '\n';
+}
+
+function renderPreview() { previewEl.textContent = buildScl() || '—'; }
+
+// --- Validation ---
+function validateProvenance() {
+  const empty = !provenanceEl.value.trim();
+  provenanceError.textContent = empty ? 'Description is required before download.' : '';
+  provenanceEl.setAttribute('aria-invalid', empty ? 'true' : 'false');
+  return !empty;
+}
+
+function updateDownloadState() {
+  const hasTones = tones.length >= 1;
+  const hasProv = !!provenanceEl.value.trim();
+  downloadBtn.disabled = !(hasTones && hasProv);
+  if (!hasTones && !hasProv) downloadHint.textContent = 'Upload files and add description to enable download.';
+  else if (!hasTones) downloadHint.textContent = 'Upload audio files with detectable tones.';
+  else if (!hasProv) downloadHint.textContent = 'Add description to enable download.';
+  else downloadHint.textContent = '';
+}
+
+downloadBtn.addEventListener('click', () => {
+  if (!validateProvenance()) { provenanceEl.focus(); return; }
+  const scl = buildScl();
+  if (!scl) return;
+  const name = slug(scaleNameEl.value.trim() || 'scale');
+  const blob = new Blob([scl], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${name}.scl`;
+  a.click();
+  URL.revokeObjectURL(url);
+  announce('Scala file downloaded');
+});
+
+// =====================================================================
+//  SAMPLE PREVIEW — play a decoded buffer, one at a time, toggleable
+// =====================================================================
+
+function togglePreview(origIdx) {
+  if (previewingOrig === origIdx) { stopPreview(); return; }
+  playPreview(origIdx);
+}
+
+function playPreview(origIdx) {
+  const rb = rawBuffers[origIdx];
+  if (!rb) return;
+  stopPreview();
+  if (!previewCtx) previewCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (previewCtx.state === 'suspended') previewCtx.resume();
+  const src = previewCtx.createBufferSource();
+  src.buffer = rb.audioBuffer;
+  src.connect(previewCtx.destination);
+  src.onended = () => { if (previewingOrig === origIdx) stopPreview(); };
+  src.start();
+  previewSource = src;
+  previewingOrig = origIdx;
+  refreshPreviewButtons();
+}
+
+function stopPreview() {
+  if (previewSource) {
+    previewSource.onended = null;
+    try { previewSource.stop(); } catch (e) {}
+    previewSource.disconnect();
+    previewSource = null;
+  }
+  previewingOrig = null;
+  refreshPreviewButtons();
+}
+
+// Update play-button state in place, so a re-render isn't needed on play/stop.
+function refreshPreviewButtons() {
+  resultsEl.querySelectorAll('[data-action="preview"]').forEach(btn => {
+    const playing = Number(btn.dataset.orig) === previewingOrig;
+    btn.classList.toggle('playing', playing);
+    btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+    btn.setAttribute('aria-label', (playing ? 'Stop ' : 'Play ') + btn.dataset.name);
+  });
+}
+
+// =====================================================================
+//  HZ WHEEL — logarithmic drag, canvas tick rendering, smooth audio
+// =====================================================================
+
+const wheelCtx = hzWheel.getContext('2d');
+let wheelDragging = false;
+let wheelLastX = 0;
+let wheelAccumCents = 0; // visual scroll offset in cents
+
+function hzToCents(hz) { return 1200 * Math.log2(hz); }
+function centsToHz(c) { return Math.pow(2, c / 1200); }
+
+function setGenHz(hz, smooth) {
+  genHz = Math.max(GEN_MIN, Math.min(GEN_MAX, hz));
+  hzInput.value = genHz.toFixed(3);
+  hzWheel.setAttribute('aria-valuenow', genHz.toFixed(3));
+  hzWheel.setAttribute('aria-valuetext', genHz.toFixed(3) + ' Hz');
+  drawWheel();
+  if (genOsc && genCtx) {
+    if (smooth) {
+      genOsc.frequency.exponentialRampToValueAtTime(genHz, genCtx.currentTime + 0.03);
+    } else {
+      genOsc.frequency.setValueAtTime(genHz, genCtx.currentTime);
+    }
+  }
+}
+
+function drawWheel() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = hzWheel.clientWidth;
+  const h = hzWheel.clientHeight;
+  hzWheel.width = w * dpr;
+  hzWheel.height = h * dpr;
+  wheelCtx.scale(dpr, dpr);
+
+  const cx = w / 2;
+  const cy = h / 2;
+  const centerCents = hzToCents(genHz);
+
+  // pixels per cent — controls zoom level
+  const pxPerCent = 1.2;
+  // visible range in cents
+  const halfRange = (w / 2) / pxPerCent;
+
+  wheelCtx.clearRect(0, 0, w, h);
+
+  // background gradient (subtle drum curvature illusion)
+  const grad = wheelCtx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(248,221,167,0.04)');
+  grad.addColorStop(0.35, 'rgba(248,221,167,0.0)');
+  grad.addColorStop(0.65, 'rgba(248,221,167,0.0)');
+  grad.addColorStop(1, 'rgba(248,221,167,0.04)');
+  wheelCtx.fillStyle = grad;
+  wheelCtx.fillRect(0, 0, w, h);
+
+  const startCents = centerCents - halfRange;
+  const endCents = centerCents + halfRange;
+
+  // Draw tick marks at multiple scales
+  const tickLevels = [
+    { interval: 1200, height: 0.8, width: 1.5, color: 'rgba(248,221,167,0.35)' },  // octave
+    { interval: 100,  height: 0.5, width: 1,   color: 'rgba(248,221,167,0.18)' },  // 100 cents
+    { interval: 10,   height: 0.25, width: 0.5, color: 'rgba(248,221,167,0.08)' },  // 10 cents
+  ];
+
+  for (const level of tickLevels) {
+    const firstTick = Math.ceil(startCents / level.interval) * level.interval;
+    for (let c = firstTick; c <= endCents; c += level.interval) {
+      const x = cx + (c - centerCents) * pxPerCent;
+      const tickH = h * level.height;
+      const y0 = (h - tickH) / 2;
+
+      wheelCtx.beginPath();
+      wheelCtx.moveTo(x, y0);
+      wheelCtx.lineTo(x, y0 + tickH);
+      wheelCtx.strokeStyle = level.color;
+      wheelCtx.lineWidth = level.width;
+      wheelCtx.stroke();
+    }
+  }
+
+  // Center line (current frequency)
+  wheelCtx.beginPath();
+  wheelCtx.moveTo(cx, 4);
+  wheelCtx.lineTo(cx, h - 4);
+  wheelCtx.strokeStyle = 'rgba(220,109,0,0.7)';
+  wheelCtx.lineWidth = 2;
+  wheelCtx.stroke();
+
+  // Small triangle indicator at top
+  wheelCtx.beginPath();
+  wheelCtx.moveTo(cx - 5, 0);
+  wheelCtx.lineTo(cx + 5, 0);
+  wheelCtx.lineTo(cx, 6);
+  wheelCtx.closePath();
+  wheelCtx.fillStyle = 'rgba(220,109,0,0.6)';
+  wheelCtx.fill();
+}
+
+// --- Mouse drag ---
+hzWheel.addEventListener('pointerdown', e => {
+  wheelDragging = true;
+  wheelLastX = e.clientX;
+  hzWheel.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+
+window.addEventListener('pointermove', e => {
+  if (!wheelDragging) return;
+  const dx = e.clientX - wheelLastX;
+  wheelLastX = e.clientX;
+  // sensitivity: shift = fine (0.2 cents/px), normal = 2 cents/px
+  const sensitivity = e.shiftKey ? 0.2 : 2;
+  const deltaCents = -dx * sensitivity;
+  const newHz = centsToHz(hzToCents(genHz) + deltaCents);
+  setGenHz(newHz, true);
+});
+
+window.addEventListener('pointerup', e => {
+  if (wheelDragging) {
+    wheelDragging = false;
+  }
+});
+
+// --- Scroll wheel ---
+hzWheel.addEventListener('wheel', e => {
+  e.preventDefault();
+  // normalize: most mice/trackpads give deltaY in pixels or lines
+  const raw = e.deltaY || e.deltaX;
+  const sensitivity = e.shiftKey ? 0.1 : 1;
+  const deltaCents = (raw > 0 ? 1 : -1) * sensitivity * Math.min(Math.abs(raw) * 0.2, 10);
+  const newHz = centsToHz(hzToCents(genHz) + deltaCents);
+  setGenHz(newHz, true);
+}, { passive: false });
+
+// --- Keyboard (arrow keys for a11y) ---
+hzWheel.addEventListener('keydown', e => {
+  let deltaCents = 0;
+  const fine = e.shiftKey;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowUp') deltaCents = fine ? 0.1 : 1;
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') deltaCents = fine ? -0.1 : -1;
+  else if (e.key === 'PageUp') deltaCents = 100;
+  else if (e.key === 'PageDown') deltaCents = -100;
+  else return;
+  e.preventDefault();
+  const newHz = centsToHz(hzToCents(genHz) + deltaCents);
+  setGenHz(newHz, true);
+});
+
+// --- Direct Hz input ---
+hzInput.addEventListener('change', () => {
+  const v = parseFloat(hzInput.value);
+  if (v && isFinite(v) && v > 0) setGenHz(v, false);
+  else hzInput.value = genHz.toFixed(3);
+});
+hzInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.target.blur(); }
+});
+
+// --- Waveform selector ---
+const waveOpts = document.querySelectorAll('.wave-opt');
+waveOpts.forEach(btn => {
+  btn.addEventListener('click', () => {
+    genWave = btn.dataset.wave;
+    waveOpts.forEach(b => b.setAttribute('aria-checked', b === btn ? 'true' : 'false'));
+    if (genOsc) genOsc.type = genWave;
+  });
+});
+
+// --- Play / Stop ---
+toneToggle.addEventListener('click', () => {
+  if (genPlaying) stopGen(); else startGen();
+});
+
+function startGen() {
+  genCtx = new (window.AudioContext || window.webkitAudioContext)();
+  genOsc = genCtx.createOscillator();
+  genGain = genCtx.createGain();
+  genOsc.type = genWave;
+  genOsc.frequency.setValueAtTime(genHz, genCtx.currentTime);
+  genGain.gain.setValueAtTime(0, genCtx.currentTime);
+  genGain.gain.linearRampToValueAtTime(0.15, genCtx.currentTime + 0.05); // fade in to avoid click
+  genOsc.connect(genGain).connect(genCtx.destination);
+  genOsc.start();
+  genPlaying = true;
+  toneToggle.textContent = 'Stop tone';
+  toneToggle.setAttribute('aria-pressed', 'true');
+}
+
+function stopGen() {
+  if (genGain && genCtx) {
+    genGain.gain.linearRampToValueAtTime(0, genCtx.currentTime + 0.05); // fade out
+    setTimeout(() => {
+      if (genOsc) { try { genOsc.stop(); } catch(e){} }
+      if (genCtx) { genCtx.close(); }
+      genOsc = null; genGain = null; genCtx = null;
+    }, 80);
+  } else {
+    if (genOsc) { try { genOsc.stop(); } catch(e){} }
+    if (genCtx) { genCtx.close(); }
+    genOsc = null; genGain = null; genCtx = null;
+  }
+  genPlaying = false;
+  toneToggle.textContent = 'Play tone';
+  toneToggle.setAttribute('aria-pressed', 'false');
+}
+
+// --- Resize handling for canvas ---
+const resizeObserver = new ResizeObserver(() => drawWheel());
+resizeObserver.observe(hzWheel);
+
+// --- Helpers ---
+function slug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'scale'; }
+function esc(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function announce(msg) { srAnnounce.textContent = ''; requestAnimationFrame(() => { srAnnounce.textContent = msg; }); }
+
+// Initial state
+updateDownloadState();
+drawWheel();
+</script>
+</body>
+</html>
