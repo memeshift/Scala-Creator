@@ -496,6 +496,18 @@
         <span id="download-hint" class="empty-state" style="padding: 0;"></span>
       </div>
 
+      <div class="full">
+        <details class="tone-gen">
+          <summary>How pitch detection works in this tool</summary>
+          <div class="tone-gen-body" style="padding-top: var(--space-4);">
+            <p style="font-family: var(--font-serif); font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.62; margin-bottom: var(--space-4);">The tool uses an algorithm called NSDF (Normalized Square Difference Function), a refined form of autocorrelation. In short: it takes a short slice from the sustained portion of each uploaded file — skipping the attack transient — and looks for the point at which the signal most closely repeats itself. That repetition period corresponds to the fundamental frequency, which becomes the Hz reading.</p>
+            <p style="font-family: var(--font-serif); font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.62; margin-bottom: var(--space-4);">This works reliably on sounds with a clear, sustained fundamental. Metallic percussion — gamelan bars, saron, bonang — tends to produce accurate results, as do most sustained pitched instruments. The Detection Range setting constrains which frequencies the algorithm considers, which reduces the chance of locking onto a harmonic instead of the fundamental.</p>
+            <p style="font-family: var(--font-serif); font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.62; margin-bottom: var(--space-4);">Some materials are harder. Muted or fast-decaying sounds — bamboo instruments like jegog, for instance — have little sustained energy for the algorithm to analyze. Large gongs and bells can be ambiguous because their perceived pitch doesn't always align with their lowest spectral partial. Instruments with unusually dense or inharmonic overtone structures may produce inconsistent readings. In any of these cases, the Hz field in each tone row can be edited manually, and the reference tone generator is there to verify by ear.</p>
+            <p style="font-family: var(--font-serif); font-size: 0.875rem; color: var(--fg-faint); line-height: 1.62;">This is project was originally built to be used with 'metallic' sounds in mind. If you're working with instruments it handles poorly, the <a href="https://github.com/memeshift/Scala-Creator" style="color: var(--link);" target="_blank" rel="noopener">GitHub repository</a> contains detailed technical notes on the detection methods considered and tradeoffs involved. Issues and pull requests are welcome!</p>
+          </div>
+        </details>
+      </div>
+
     </div>
   </main>
 
