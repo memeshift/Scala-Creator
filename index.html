@@ -1079,6 +1079,7 @@ toneToggle.addEventListener('click', () => {
 
 function startGen() {
   genCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (genCtx.state === 'suspended') genCtx.resume();
   genOsc = genCtx.createOscillator();
   genGain = genCtx.createGain();
   genOsc.type = genWave;
