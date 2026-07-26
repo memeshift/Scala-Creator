@@ -361,12 +361,12 @@
     <a href="#energy">3 · Where's the energy?</a>
     <a href="#crepe">4 · The neural net</a>
     <a href="#showdown">5 · The showdown</a>
-    <a class="toc-home" href="../index.html">← Scala Creator</a>
+    <a class="toc-home" href="index.html">← Scala Creator</a>
   </nav>
 
   <header class="page">
     <h1>How Machines Hear Pitch</h1>
-    <p class="subtitle">Five methods, two families, and the gamelan sounds that break them</p>
+    <p class="subtitle">Five methods and the sounds that expose their differences.</p>
     <p class="intro">
       When you drop a sample into Scala Creator, an algorithm has to answer a deceptively hard question:
       <em>what note is this?</em> This page walks through the five methods we evaluated — no math required,
@@ -385,7 +385,7 @@
         <button type="button" aria-label="Show another example">🎲</button>
       </div>
       <p>
-        Almost every pitched sound is a stack of pure tones called <strong>partials</strong>, all sounding at once.
+        Almost every pitched sound in the natural world is a stack of pure tones called <strong>partials</strong>, all sounding at once.
         A guitar string is the kind of sound most pitch algorithms were built around: its partials sit at neat
         whole-number multiples of the lowest one — 1×, 2×, 3×, 4×. Stacks like that are called
         <strong>harmonic</strong>, and they add up to a waveform that repeats over and over, like a loop.
@@ -393,7 +393,7 @@
       <p>
         A struck bronze bar — a saron in a gamelan — follows different physics. Its partials sit at ratios like
         <strong>1 : 2.76 : 5.40</strong>. Nothing lines up, so the waveform <em>never repeats</em> — and the
-        standard assumptions quietly fall apart. That single fact decides which pitch-detection methods work
+        standard assumptions in the math behind the algorithm fall apart. That single fact decides which pitch-detection methods work
         and which ones fail.
       </p>
 
@@ -677,7 +677,7 @@
           <p>Saron bars, genders and slenthems vibrate like free bars (modal ratios ≈ 1 : 2.76 : 5.40 : 8.93); measurement studies show makers tune the lowest partial to within ~2 Hz across an ensemble while upper partials vary widely — so "lowest strong partial" is the physically and perceptually correct target.</p>
           <p>A bossed gong's central boss forces two principal modes into a near-2:1 relationship, and on some gongs the pitch-bearing partial is the 2nd or 3rd — which is why the spectral method needs a frequency-range fence rather than a blind "lowest peak" rule.</p>
           <p>A bell's strike note is a <em>virtual pitch</em>: the ear constructs it from the nominal, superquint and octave-nominal partials, landing near nominal ÷ 2 — a frequency where there may be no partial at all. Every naive method misses it; handling bells needs a dedicated strike-note mode.</p>
-          <p>Full citations and the complete engineering plan live in <a href="../PITCH_DETECTION_NOTES.md">PITCH_DETECTION_NOTES.md</a>.</p>
+          <p>Full citations and the complete engineering plan live in <a href="PITCH_DETECTION_NOTES.md">PITCH_DETECTION_NOTES.md</a>.</p>
         </div>
       </details>
     </section>
@@ -690,8 +690,8 @@
         a second opinion.
       </p>
       <p style="margin-top:12px;">
-        <a href="../index.html">← Back to Scala Creator</a> ·
-        <a href="../PITCH_DETECTION_NOTES.md">Read the full method notes</a>
+        <a href="index.html">← Back to Scala Creator</a> ·
+        <a href="PITCH_DETECTION_NOTES.md">Read the full method notes</a>
       </p>
     </footer>
   </main>

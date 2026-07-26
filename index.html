@@ -486,6 +486,51 @@
   .preview-head .panel-heading { margin-bottom: 0; }
   .preview-head .seg-opt { min-height: 30px; padding: 4px var(--space-3); }
 
+  /* --- Prose callout --- */
+  /* A left rule rather than a full border: the panels already own the boxed-in look, so an
+     enclosed box here would read as a second panel nested inside the disclosure rather than
+     as an aside within the prose. The whole block is the anchor, so the hit target is the
+     card, not just the title line. */
+  .callout {
+    display: block; text-decoration: none;
+    border-left: 2px solid var(--primary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    padding: var(--space-4);
+    background:
+      linear-gradient(90deg, rgba(239,138,37,0.09), rgba(239,138,37,0.025) 55%, rgba(239,138,37,0));
+    transition: background var(--dur) var(--ease-out),
+                border-color var(--dur) var(--ease-out);
+  }
+  .callout:hover {
+    border-color: var(--orange-300);
+    background:
+      linear-gradient(90deg, rgba(239,138,37,0.15), rgba(239,138,37,0.05) 55%, rgba(239,138,37,0));
+  }
+  .callout:focus-visible { outline: none; box-shadow: var(--shadow-ring); }
+
+  .callout-label {
+    display: block; font-family: var(--font-sans); font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-faint);
+    margin-bottom: var(--space-2);
+  }
+  .callout-title {
+    display: block; font-family: var(--font-sans); font-size: 0.95rem; font-weight: 600;
+    color: var(--link); line-height: 1.35;
+    transition: color var(--dur-fast) var(--ease-out);
+  }
+  .callout:hover .callout-title { color: var(--link-hover); }
+  /* inline-block so the nudge transform applies — inline elements ignore it. */
+  .callout-arrow {
+    display: inline-block; margin-left: 0.4em;
+    transition: transform var(--dur) var(--ease-out);
+  }
+  .callout:hover .callout-arrow { transform: translateX(3px); }
+  .callout-desc {
+    display: block; margin-top: 6px;
+    font-family: var(--font-serif); font-size: 0.875rem; line-height: 1.6;
+    color: var(--fg-muted);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   }
@@ -642,6 +687,13 @@
             <p style="font-family: var(--font-serif); font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.62; margin-bottom: var(--space-4);">The tool uses an algorithm called NSDF (Normalized Square Difference Function), a refined form of autocorrelation. In short: it takes a short slice from the sustained portion of each uploaded file — skipping the attack transient — and looks for the point at which the signal most closely repeats itself. That repetition period corresponds to the fundamental frequency, which becomes the Hz reading.</p>
             <p style="font-family: var(--font-serif); font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.62; margin-bottom: var(--space-4);">This works reliably on sounds with a clear, sustained fundamental. Metallic percussion — gamelan bars, bells, bonang — tends to produce accurate results, as do most sustained pitched instruments. The Detection Range setting constrains which frequencies the algorithm considers, which reduces the chance of locking onto a harmonic instead of the fundamental.</p>
             <p style="font-family: var(--font-serif); font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.62; margin-bottom: var(--space-4);">Some materials are harder. Muted or fast-decaying sounds — bamboo instruments like jegog, for instance — have little sustained energy for the algorithm to analyze. Large gongs and bells can be ambiguous because their perceived pitch doesn't always align with their lowest spectral partial. Instruments with unusually dense or inharmonic overtone structures may produce inconsistent readings. In any of these cases, the Hz field in each tone row can be edited manually, and the Reference Tone Generator is there to verify by ear.</p>
+
+            <a class="callout" href="analysis-methods.html">
+              <span class="callout-label">Interactive essay</span>
+              <span class="callout-title">How Machines Hear Pitch<span class="callout-arrow" aria-hidden="true">→</span></span>
+              <span class="callout-desc">The five detection methods evaluated for this tool, walked through with playable demos and tested against four instruments — including the inharmonic bronze that trips most of them up. No maths required. Headphones on.</span>
+            </a>
+
             <p style="font-family: var(--font-serif); font-size: 0.875rem; color: var(--fg-faint); line-height: 1.62;"><b>Credits &amp; Inspirations:</b> This project is inspired by <a href="https://www.latentsonorities.org/" style="color: var(--link);" target="_blank" rel="noopener">Latent Sonorities</a> and <a href="https://isartum.net/leimma" style="color: var(--link);" target="_blank" rel="noopener">Leimma</a> and a conversation between <a href="https://www.memeshift.com" style="color: var(--link);" target="_blank" rel="noopener">Morgan Sully</a> and <a href="https://scholar.google.com/citations?user=UXWpcQ4AAAAJ&hl=en" style="color: var(--link);" target="_blank" rel="noopener">Laurel Pardue</a>. It was originally built to be used with gamelanic instruments in mind. Check out the <a href="https://github.com/memeshift/Scala-Creator" style="color: var(--link);" target="_blank" rel="noopener">GitHub repository</a> for detailed technical notes on the pitch detection methods. Issues and pull requests are welcome. </p>
           </div>
         </details>
