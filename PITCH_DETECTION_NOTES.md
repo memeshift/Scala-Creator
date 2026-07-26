@@ -116,11 +116,15 @@ The perceived pitch of inharmonic instruments is also genuinely ambiguous. Gamel
 
 ## References
 
-- McLeod, P. & Wyvill, G. (2005). A smarter way to find pitch. *Proceedings of the International Computer Music Conference.*
-- de Cheveigné, A. & Kawahara, H. (2002). YIN, a fundamental frequency estimator for speech and music. *JASA.*
-- Mauch, M. & Dixon, S. (2014). pYIN: A fundamental frequency estimator using probabilistic threshold distributions. *ICASSP.*
-- Kim, J.W., Salamon, J., Li, P. & Bello, J.P. (2018). CREPE: A convolutional representation for pitch estimation. *ICASSP.*
-- McLachlan, N., Marco, D. & Wilson, S. (2013). Pitch salience of two simultaneous tones. *Frontiers in Psychology*, 4:768.
-- Rossing, T.D. & Shepherd, R.B. (1982). Acoustics of gamelan instruments. *Percussive Notes.*
-- Woodhouse, J. *Euphonics.* §3.2 (beam vibration modes).
-- Camacho, A. & Harris, J.G. (2008). A sawtooth waveform inspired pitch estimator for speech and music. *JASA.* (SWIPE)
+Links checked 27 July 2026.
+
+- McLeod, P. & Wyvill, G. (2005). A smarter way to find pitch. *Proceedings of the International Computer Music Conference.* — [PDF](https://www.cs.otago.ac.nz/graphics/Geoff/tartini/papers/A_Smarter_Way_to_Find_Pitch.pdf)
+- de Cheveigné, A. & Kawahara, H. (2002). YIN, a fundamental frequency estimator for speech and music. *JASA* 111(4):1917–1930. — [doi:10.1121/1.1458024](https://doi.org/10.1121/1.1458024)
+- Mauch, M. & Dixon, S. (2014). pYIN: A fundamental frequency estimator using probabilistic threshold distributions. *ICASSP.* — [doi:10.1109/ICASSP.2014.6853678](https://doi.org/10.1109/ICASSP.2014.6853678)
+- Kim, J.W., Salamon, J., Li, P. & Bello, J.P. (2018). CREPE: A convolutional representation for pitch estimation. *ICASSP.* — [arXiv:1802.06182](https://arxiv.org/abs/1802.06182)
+- McLachlan, N., Marco, D. & Wilson, S. (2013). Pitch salience of two simultaneous tones. *Frontiers in Psychology*, 4:768. — [doi:10.3389/fpsyg.2013.00768](https://doi.org/10.3389/fpsyg.2013.00768)
+- Rossing, T.D. & Shepherd, R.B. (1982). Acoustics of gamelan instruments. *Percussive Notes.* — no stable open URL found; print/archive only.
+- Woodhouse, J. *Euphonics.* §3.2 (beam vibration modes). — [euphonics.org](https://euphonics.org/2-2-beam-vibration-and-free-free-modes/)
+- Camacho, A. & Harris, J.G. (2008). A sawtooth waveform inspired pitch estimator for speech and music. *JASA* 124(3):1638–1652. (SWIPE) — [doi:10.1121/1.2951592](https://doi.org/10.1121/1.2951592)
+- Smith, J.O. III. *Spectral Audio Signal Processing* — quadratic interpolation of spectral peaks (QIFFT). CCRMA, Stanford. — [ccrma.stanford.edu](https://ccrma.stanford.edu/~jos/sasp/Quadratic_Interpolation_Spectral_Peaks.html)
+- Hibbert, W.A. *The Sound of Bells* / PhD thesis, The Open University (2008) — strike pitch as virtual pitch. — [hibberts.co.uk](https://www.hibberts.co.uk/the-strike-note-of-bells/)

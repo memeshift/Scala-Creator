@@ -452,7 +452,8 @@
           The common period is 1/f<sub>0</sub>, so the waveform is periodic and the ear (and most algorithms) reads f<sub>0</sub> as the pitch.</p>
           <p>A free bar vibrating transversely (the saron model) has mode frequencies scaling roughly with the square of odd integers, giving ratios near:</p>
           <div class="formula">f₁ : f₂ : f₃ : f₄ ≈ 1.00 : 2.76 : 5.40 : 8.93</div>
-          <p>No common divisor → no period → the sum of these sines is <em>quasi-periodic</em> at best. Research on gamelan instruments (McLachlan, Marco &amp; Wilson 2013) shows makers tune the <strong>lowest partial</strong> precisely, and listeners' perceived pitch tracks it — the upper partials are timbre, not pitch.</p>
+          <p>Those figures come from Jim Woodhouse's <a href="https://euphonics.org/2-2-beam-vibration-and-free-free-modes/" target="_blank" rel="noopener"><em>Euphonics</em> §3.2</a>, which lists the free–free bending modes as 1.00, 2.76, 5.40, 8.93, 13.34 and notes that "none of the ratios are very close to whole numbers."</p>
+          <p>No common divisor → no period → the sum of these sines is <em>quasi-periodic</em> at best. Research on gamelan instruments (<a href="https://doi.org/10.3389/fpsyg.2013.00768" target="_blank" rel="noopener">McLachlan, Marco &amp; Wilson 2013</a>, <em>Frontiers in Psychology</em> 4:768) shows makers tune the <strong>lowest partial</strong> precisely — sister instruments within about 2 Hz of each other, while upper partials vary widely — and listeners' perceived pitch tracks it. The upper partials are timbre, not pitch.</p>
         </div>
       </details>
     </section>
@@ -524,10 +525,10 @@
         <div class="hood-body">
           <p>Autocorrelation multiplies the signal by a delayed copy of itself and sums:</p>
           <div class="formula">r(τ) = Σ x(t) · x(t + τ)</div>
-          <p>NSDF (the McLeod Pitch Method) normalizes it so the score always lives between −1 and +1 regardless of loudness:</p>
+          <p>NSDF (the McLeod Pitch Method, from <a href="https://www.cs.otago.ac.nz/graphics/Geoff/tartini/papers/A_Smarter_Way_to_Find_Pitch.pdf" target="_blank" rel="noopener">McLeod &amp; Wyvill 2005</a>) normalizes it so the score always lives between −1 and +1 regardless of loudness:</p>
           <div class="formula">n(τ) = 2·Σ x(t)·x(t+τ) &nbsp;/&nbsp; Σ [x(t)² + x(t+τ)²]</div>
           <p>The peak height doubles as a <strong>clarity</strong> measure — how tone-like the sound is. Canonical MPM picks the <em>first</em> major peak; Scala Creator picks the <em>global</em> maximum, which avoids spurious low-frequency candidates on metallic timbres but is riskier on other material.</p>
-          <p>YIN instead computes a difference function d(τ), normalizes it cumulatively, and takes the first dip below a threshold (≈0.15). Published accuracy for both is ±1–2 cents — <em>on harmonic test sets</em>. On inharmonic sounds, the failure isn't precision, it's picking the wrong partial entirely.</p>
+          <p><a href="https://doi.org/10.1121/1.1458024" target="_blank" rel="noopener">YIN</a> (de Cheveigné &amp; Kawahara 2002) instead computes a difference function d(τ), normalizes it cumulatively, and takes the first dip below a threshold (≈0.15). <a href="https://doi.org/10.1109/ICASSP.2014.6853678" target="_blank" rel="noopener">pYIN</a> (Mauch &amp; Dixon 2014) runs it across a distribution of thresholds and Viterbi-decodes the candidates into a smooth track. Published accuracy for both is ±1–2 cents — <em>on harmonic test sets</em>. On inharmonic sounds, the failure isn't precision, it's picking the wrong partial entirely.</p>
         </div>
       </details>
     </section>
@@ -633,7 +634,7 @@
       <details class="hood">
         <summary>Under the hood: QIFFT &amp; the cepstrum</summary>
         <div class="hood-body">
-          <p>With the peak bin k and its neighbours' dB magnitudes y₋₁, y₀, y₊₁, the parabolic offset from the bin centre is:</p>
+          <p>The quadratically-interpolated FFT is set out in Julius O. Smith III's <a href="https://ccrma.stanford.edu/~jos/sasp/Quadratic_Interpolation_Spectral_Peaks.html" target="_blank" rel="noopener"><em>Spectral Audio Signal Processing</em> (CCRMA, Stanford)</a>. With the peak bin k and its neighbours' dB magnitudes y₋₁, y₀, y₊₁, the parabolic offset from the bin centre is:</p>
           <div class="formula">δ = ½ · (y₋₁ − y₊₁) / (y₋₁ − 2y₀ + y₊₁),&nbsp;&nbsp; f ≈ (k + δ) · sampleRate / N</div>
           <p>With zero-padding, error drops below 0.1% of frequency — sub-cent for a clean partial. One practical note: the Web Audio <code>AnalyserNode</code>'s default FFT is far too coarse for this; a custom zero-padded FFT is required.</p>
           <p>The cepstrum is the inverse FFT of the log-magnitude spectrum. Evenly spaced harmonics create a ripple in the log spectrum whose "frequency" (called <em>quefrency</em>) equals the pitch period — it shows up as one sharp cepstral peak. Uneven inharmonic partials produce no coherent ripple — but note what that does <em>not</em> mean. The transform still returns something: a peak at whatever period best fits mutually incompatible spacings, or, where partials are near-integer multiples, a peak at a genuine periodicity that isn’t the perceived pitch. Absence of structure produces a wrong reading, not a blank one, which is why the panel above is worth switching through.</p>
@@ -672,7 +673,8 @@
           <h3>Why it's tempting <span class="fam-tag fam-ml">data-driven</span></h3>
           <p>
             State-of-the-art accuracy on voices and harmonic instruments — 99.5% of frames within 10 cents on
-            its benchmark. Astonishing on the material it was trained on.
+            its RWC-Synth benchmark (<a href="https://arxiv.org/abs/1802.06182" target="_blank" rel="noopener">Kim, Salamon, Li &amp; Bello 2018</a>).
+            Astonishing on the material it was trained on.
           </p>
         </div>
         <div class="method-card">
@@ -726,9 +728,10 @@
       <details class="hood">
         <summary>Under the hood: where the verdicts come from</summary>
         <div class="hood-body">
-          <p>Saron bars, genders and slenthems vibrate like free bars (modal ratios ≈ 1 : 2.76 : 5.40 : 8.93); measurement studies show makers tune the lowest partial to within ~2 Hz across an ensemble while upper partials vary widely — so "lowest strong partial" is the physically and perceptually correct target.</p>
-          <p>A bossed gong's central boss forces two principal modes into a near-2:1 relationship, and on some gongs the pitch-bearing partial is the 2nd or 3rd — which is why the spectral method needs a frequency-range fence rather than a blind "lowest peak" rule.</p>
-          <p>A bell's strike note is a <em>virtual pitch</em>: the ear constructs it from the nominal, superquint and octave-nominal partials, landing near nominal ÷ 2 — a frequency where there may be no partial at all. Every naive method misses it; handling bells needs a dedicated strike-note mode.</p>
+          <p>Saron bars, genders and slenthems vibrate like free bars (modal ratios ≈ 1 : 2.76 : 5.40 : 8.93, per <a href="https://euphonics.org/2-2-beam-vibration-and-free-free-modes/" target="_blank" rel="noopener">Woodhouse, <em>Euphonics</em> §3.2</a>); <a href="https://doi.org/10.3389/fpsyg.2013.00768" target="_blank" rel="noopener">McLachlan, Marco &amp; Wilson (2013)</a> show makers tune the lowest partial to within ~2 Hz across an ensemble while upper partials vary widely — so "lowest strong partial" is the physically and perceptually correct target.</p>
+          <p>A bossed gong's central boss forces two principal modes into a near-2:1 relationship (Rossing &amp; Shepherd, "Acoustics of gamelan instruments," <em>Percussive Notes</em> 1982), and on some gongs the pitch-bearing partial is the 2nd or 3rd — which is why the spectral method needs a frequency-range fence rather than a blind "lowest peak" rule.</p>
+          <p>A bell's strike note is a <em>virtual pitch</em>: the ear constructs it from the nominal, superquint and octave-nominal partials, landing near nominal ÷ 2 — a frequency where there may be no partial at all. Bill Hibbert's <a href="https://www.hibberts.co.uk/the-strike-note-of-bells/" target="_blank" rel="noopener">The Sound of Bells</a> documents the effect and the measurements behind it. Every naive method misses it; handling bells needs a dedicated strike-note mode.</p>
+          <p>The spectral-matching alternative to all of this is <a href="https://doi.org/10.1121/1.2951592" target="_blank" rel="noopener">SWIPE</a> (Camacho &amp; Harris 2008), which fits a sawtooth template to the spectrum — a reasonable middle ground, though still harmonic-template-based and so not ideal for strongly inharmonic material.</p>
           <p>Full citations and the complete engineering plan live in <a href="PITCH_DETECTION_NOTES.md">PITCH_DETECTION_NOTES.md</a>.</p>
         </div>
       </details>
