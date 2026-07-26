@@ -2,6 +2,8 @@
 
 A browser-based tool for generating [Scala tuning files](https://www.huygens-fokker.org/scala/) from uploaded audio samples. Built for musicians, artists, and researchers working with microtonal and alternative tuning systems.
 
+Live at [tuning.latentsonorities.org](https://tuning.latentsonorities.org).
+
 ## What it does
 
 Upload a batch of tonal audio files (WAV, AIF, AAC, and other common formats) and Scala Creator analyses the frequency relationships between them. From there, you can fine-tune individual pitches to correct for fundamental or harmonic discrepancies, then export the result as a `.scl` file ready for use in any Scala-compatible software.
