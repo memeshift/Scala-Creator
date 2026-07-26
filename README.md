@@ -1,6 +1,6 @@
 # Scala Creator
 
-A browser-based tool for generating [Scala tuning files](https://www.huygens-fokker.org/scala/) from uploaded audio samples. Built for musicians, artists, and researchers working with microtonal and alternative tuning systems.
+A browser-based tool for generating [Scala tuning files](https://www.huygens-fokker.org/scala/) from uploaded audio samples. Built for musicians, artists, and researchers working with various tuning systems.
 
 Live at [tuning.latentsonorities.org](https://tuning.latentsonorities.org).
 
@@ -16,7 +16,7 @@ Working prototype. Pitch detection is functional but accuracy is an ongoing area
 
 ## How pitch detection works
 
-The current implementation uses NSDF (Normalized Square Difference Function), a variant of autocorrelation tuned for sustained metallic tones. It works reliably on gamelan metallophones and most pitched instruments with a clear fundamental; it can struggle with fast-decaying sounds, large gongs and bells, and instruments with dense inharmonic spectra.
+The current implementation uses NSDF (Normalized Square Difference Function), a variant of autocorrelation tuned for sustained metallic tones. It works as reliably as possible on gamelanic sounds (gamelan, glockenspiel, etc.) and most pitched instruments with a clear fundamental; it can struggle with fast-decaying sounds, large gongs and bells, and instruments with dense inharmonic spectra.
 
 See [PITCH_DETECTION_NOTES.md](PITCH_DETECTION_NOTES.md) for a full comparison of the methods evaluated, the reasoning behind the current approach, and a recommended development path for improving accuracy across a wider range of instruments.
 
