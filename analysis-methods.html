@@ -422,6 +422,16 @@
         <strong>harmonic</strong>, and they add up to a waveform that repeats over and over, like a loop.
       </p>
       <p>
+        The lowest partial is the <strong>fundamental</strong> — <em>f₀</em>. Think of the partials as singers
+        holding one chord. The others sing at exact multiples of the lowest voice's speed, so they all draw
+        breath at the same instant. That shared breath is the waveform's repeat.
+      </p>
+      <p>
+        <strong>Pitch</strong> is not one of the singers. It's the name you'd give what you heard — one note,
+        not seven. Your ear does the blending for free, and for harmonic sounds it always names the lowest
+        voice. Which is why the two words get used as if they were one.
+      </p>
+      <p>
         A struck bronze bar — a saron in a Javanese gamelan — follows different physics. Its partials can sit at ratios like
         <strong>1 : 2.76 : 5.40</strong>. Nothing lines up, so the waveform <em>never repeats</em> — and standard assumptions in the math behind a particular algorithm can fall apart. Thusly, some methods will reliably find the pitch of 'smoother' sounding harmonic instruments, while others will do better on 'metallic', inharmonic ones.
       </p>
@@ -950,7 +960,11 @@ function buildMixSliders() {
     const lbl = document.createElement('label');
     lbl.className = 'ctl';
     lbl.htmlFor = 'mixAmp' + i;
-    lbl.innerHTML = 'Partial ' + (i + 1) + ' <span class="ratio-tag">×' + (r % 1 === 0 ? r : r.toFixed(2)) + '</span>';
+    // Partial 1 is only a "fundamental" when the stack is harmonic — on the saron
+    // there's no common divisor, so it is merely the lowest partial.
+    const role = i === 0 ? (mix.mode === 'harmonic' ? 'fundamental' : 'lowest partial') : '';
+    lbl.innerHTML = 'Partial ' + (i + 1) + ' <span class="ratio-tag">×' + (r % 1 === 0 ? r : r.toFixed(2)) + '</span>' +
+      (role ? ' <span class="ratio-tag">' + role + '</span>' : '');
     const input = document.createElement('input');
     input.type = 'range';
     input.id = 'mixAmp' + i;
