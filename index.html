@@ -152,11 +152,39 @@
   }
   input:focus, textarea:focus { outline: none; border-color: var(--ring); box-shadow: var(--shadow-ring); }
   textarea { min-height: 5rem; resize: vertical; line-height: 1.55; }
-  input[type="number"] { font-family: var(--font-sans); width: 8ch; -moz-appearance: textfield; }
+  /* 5 digits ("20000") plus padding, border and the Chromium/Safari spinner buttons. */
+  input[type="number"] {
+    font-family: var(--font-sans); -moz-appearance: textfield;
+    width: calc(5ch + var(--space-4) * 2 + 2px + 1.25rem);
+  }
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
 
   .field { margin-bottom: var(--space-5); }
+  .field:last-child { margin-bottom: 0; }
+  .field-pair { display: grid; grid-template-columns: minmax(0, 22ch) minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+  .field-pair .field { margin-bottom: 0; }
+  @media (max-width: 640px) { .field-pair { grid-template-columns: 1fr; } }
+
+  /* Controls that act on the panel above them, set off by a divider. */
+  .panel-controls {
+    margin-top: var(--space-5); padding-top: var(--space-5);
+    border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: var(--space-5);
+  }
+  .ctl-hint {
+    font-family: var(--font-serif); font-size: 0.8125rem; color: var(--fg-faint);
+    margin-top: var(--space-1); margin-bottom: var(--space-3);
+  }
+  /* Sits above the output it configures, so the divider flips to the underside. */
+  .panel-controls--top {
+    margin-top: 0; margin-bottom: var(--space-5);
+    padding-top: 0; padding-bottom: var(--space-5);
+    border-top: none; border-bottom: 1px solid var(--border);
+  }
+  /* Keep the disclosure from reading as another item in the controls group. */
+  .panel-controls + details.tone-gen { margin-top: var(--space-5); }
+
   .field-row { display: flex; gap: var(--space-5); flex-wrap: wrap; align-items: end; justify-content: flex-end; }
   .field-inline { flex: 0 0 auto; }
   .field-grow { flex: 1 1 auto; min-width: 200px; }
@@ -267,10 +295,14 @@
   .tone-root-btn:focus-visible { outline: none; box-shadow: var(--shadow-ring); }
   .tone-root-btn[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #1d1208; }
   .tone-row.failed .tone-hz { color: var(--danger-soft); }
-  .tone-override {
+  /* Type+attribute selector on input[type="number"] outranks a bare class, so these
+     widths need the element qualifier to apply at all. Sized via calc because
+     box-sizing is border-box: the ch allowance must clear padding, border and the
+     spinner buttons Chromium/Safari render inside the field. */
+  input[type="number"].tone-override {
     font-family: var(--font-sans); font-size: 0.8rem; background: var(--bg);
     border: 1px solid var(--border-strong); color: var(--fg); padding: 4px 8px;
-    border-radius: var(--radius-sm); width: 9ch;
+    border-radius: var(--radius-sm); width: calc(9ch + 18px + 1.25rem);
   }
   .tone-override:focus { outline: none; border-color: var(--ring); box-shadow: var(--shadow-ring); }
 
@@ -289,10 +321,12 @@
   .tone-play-btn:focus-visible { outline: none; box-shadow: var(--shadow-ring); }
 
   .tone-hz-edit { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
-  .tone-hz-input {
+  /* Widest value is toFixed(3) at the 20000 Hz ceiling: "20000.000", 9 chars. */
+  input[type="number"].tone-hz-input {
     font-family: var(--font-sans); font-size: 0.82rem; color: var(--orange-300);
     background: var(--bg); border: 1px solid var(--border-strong);
-    padding: 4px 6px; border-radius: var(--radius-sm); width: 10ch; text-align: right;
+    padding: 4px 6px; border-radius: var(--radius-sm);
+    width: calc(9ch + 14px + 1.25rem); text-align: right;
     transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
   }
   .tone-hz-input:focus { outline: none; border-color: var(--ring); box-shadow: var(--shadow-ring); }
@@ -302,7 +336,8 @@
   .scl-preview {
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md);
     padding: var(--space-4); font-family: var(--font-sans); font-size: 0.78rem;
-    line-height: 1.5; color: var(--fg-muted); overflow-x: auto; white-space: pre; min-height: 4rem;
+    line-height: 1.5; color: var(--fg-muted); overflow: auto; white-space: pre;
+    min-height: 4rem; max-height: 60vh; overscroll-behavior: contain;
   }
 
   /* --- Collapsible tone generator --- */
@@ -412,48 +447,15 @@
         </div>
       </div>
 
-      <div class="full panel">
-        <div class="panel-heading" id="settings-heading">Settings</div>
-        <div role="group" aria-labelledby="settings-heading">
-          <div class="field">
-            <label for="scaleName">Scale name</label>
-            <input type="text" id="scaleName" value="Untitled scale">
-          </div>
-          <div class="field">
-            <label for="provenance">
-              Description
-              <span class="required-marker" aria-hidden="true">(required)</span>
-            </label>
-            <textarea id="provenance" required
-              placeholder="Instruments/sounds sampled, origin, person recording, location, tuning system, etc."
-              aria-describedby="provenance-hint provenance-error"
-            ></textarea>
-            <div id="provenance-hint" class="sr-only">Required. Describe the origin of this tuning and its sources.</div>
-            <div id="provenance-error" class="validation-msg" role="alert" aria-live="polite"></div>
-          </div>
-          <div class="field">
-            <label id="octaveFoldLabel">Octave Folding</label>
-            <div class="toggle-desc">When enabled, all tones are folded into a single 1200-cent octave above the root.</div>
-            <div class="toggle-row">
-              <div class="toggle">
-                <input type="checkbox" id="octaveFold" role="switch" aria-checked="false" aria-labelledby="octaveFoldLabel">
-                <span class="toggle-track" aria-hidden="true"></span>
-                <span class="toggle-thumb" aria-hidden="true"></span>
-              </div>
-              <span class="toggle-label" id="octaveFoldState">Off</span>
-            </div>
-          </div>
-          <div class="field">
-            <label id="repeatModeLabel">Keyboard Repeat (.tun only)</label>
-            <div class="toggle-desc">A .tun file gives every MIDI key an absolute pitch, so the scale is laid out from the root on note 60 and repeated to cover the keyboard. <b>Octave</b> repeats the tone set every 1200 cents. <b>Scale span</b> repeats at the interval between the lowest and highest tone, preserving the measured intervals but producing a non-octave repeat. With octave folding on, the repeat is always 1200 cents.</div>
-            <div class="seg-select" role="radiogroup" aria-labelledby="repeatModeLabel" id="repeatMode">
-              <button type="button" class="seg-opt" role="radio" aria-checked="true" data-repeat="octave">Octave (1200 ¢)</button>
-              <button type="button" class="seg-opt" role="radio" aria-checked="false" data-repeat="span">Scale span</button>
-            </div>
-          </div>
-          <div class="field">
+      <div class="panel" role="region" aria-labelledby="tones-heading">
+        <div class="panel-heading" id="tones-heading">Detected tones</div>
+        <div class="toggle-desc">Pitch detection isn't always exact — it can lock onto a harmonic instead of the fundamental pitch. To check by ear, preview a tone, dial the reference tone generator to its Hz, and play both: a slow wavering pulse means they're close but not matched. Nudge the Hz until the pulse disappears.</div>
+        <div id="results" aria-live="polite"><p class="empty-state">Nothing analyzed yet.</p></div>
+
+        <div class="panel-controls">
+          <div class="ctl">
             <label id="freqRangeLabel">Detection Range</label>
-            <div class="toggle-desc">Sets the frequency bounds for pitch detection. Tones with fundamentals outside this range will not be detected. Narrow the range if detection is picking up harmonics instead of fundamentals, or widen it to capture very low or high tones.</div>
+            <div class="ctl-hint">Fundamentals outside these bounds aren't detected. Narrow it if a tone locks onto a harmonic; widen it for very low or high tones. Changing either value re-analyzes.</div>
             <div class="field-row">
               <div class="field-inline">
                 <label for="minHz">Min Hz</label>
@@ -465,13 +467,19 @@
               </div>
             </div>
           </div>
+          <div class="ctl">
+            <label id="octaveFoldLabel">Octave Folding</label>
+            <div class="ctl-hint">Folds every tone into a single 1200-cent octave above the root. The cents column above updates live.</div>
+            <div class="toggle-row">
+              <div class="toggle">
+                <input type="checkbox" id="octaveFold" role="switch" aria-checked="false" aria-labelledby="octaveFoldLabel">
+                <span class="toggle-track" aria-hidden="true"></span>
+                <span class="toggle-thumb" aria-hidden="true"></span>
+              </div>
+              <span class="toggle-label" id="octaveFoldState">Off</span>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div class="panel" role="region" aria-labelledby="tones-heading">
-        <div class="panel-heading" id="tones-heading">Detected tones</div>
-        <div class="toggle-desc">Pitch detection isn't always exact — it can lock onto a harmonic instead of the fundamental pitch. To check by ear, preview a tone, dial the reference tone generator to its Hz, and play both: a slow wavering pulse means they're close but not matched. Nudge the Hz until the pulse disappears.</div>
-        <div id="results" aria-live="polite"><p class="empty-state">Nothing analyzed yet.</p></div>
 
         <details class="tone-gen">
           <summary>Reference tone generator</summary>
@@ -512,7 +520,40 @@
             <button type="button" class="seg-opt" role="radio" aria-checked="false" data-format="tun">.tun</button>
           </div>
         </div>
+        <div class="panel-controls panel-controls--top">
+          <div class="ctl">
+            <label id="repeatModeLabel">Keyboard Repeat (.tun only)</label>
+            <div class="ctl-hint">A .tun file gives every MIDI key an absolute pitch, so the scale is laid out from the root on note 60 and repeated across the keyboard. <b>Octave</b> repeats every 1200 cents. <b>Scale span</b> repeats at the interval between the lowest and highest tone, preserving the measured intervals but producing a non-octave repeat. With octave folding on, the repeat is always 1200 cents.</div>
+            <div class="seg-select" role="radiogroup" aria-labelledby="repeatModeLabel" id="repeatMode">
+              <button type="button" class="seg-opt" role="radio" aria-checked="true" data-repeat="octave">Octave (1200 ¢)</button>
+              <button type="button" class="seg-opt" role="radio" aria-checked="false" data-repeat="span">Scale span</button>
+            </div>
+          </div>
+        </div>
+
         <pre class="scl-preview" id="preview" tabindex="0" aria-label="Tuning file preview">—</pre>
+      </div>
+
+      <div class="full panel" role="region" aria-labelledby="details-heading">
+        <div class="panel-heading" id="details-heading">Scale details</div>
+        <div class="field-pair">
+          <div class="field">
+            <label for="scaleName">Scale name</label>
+            <input type="text" id="scaleName" value="Untitled scale">
+          </div>
+          <div class="field">
+            <label for="provenance">
+              Description
+              <span class="required-marker" aria-hidden="true">(required)</span>
+            </label>
+            <textarea id="provenance" required
+              placeholder="Instruments/sounds sampled, origin, person recording, location, tuning system, etc."
+              aria-describedby="provenance-hint provenance-error"
+            ></textarea>
+            <div id="provenance-hint" class="sr-only">Required. Describe the origin of this tuning and its sources.</div>
+            <div id="provenance-error" class="validation-msg" role="alert" aria-live="polite"></div>
+          </div>
+        </div>
       </div>
 
       <div class="full" style="display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap;">
