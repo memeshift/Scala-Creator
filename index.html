@@ -361,16 +361,26 @@
   .hz-input:focus { outline: none; border-color: var(--ring); }
   .hz-unit { font-family: var(--font-sans); font-size: 0.8rem; color: var(--fg-faint); }
 
-  .wave-select { display: flex; gap: 2px; border-radius: var(--radius-btn); overflow: hidden; border: 1px solid var(--border-strong); }
-  .wave-opt {
+  .wave-select, .seg-select { display: flex; gap: 2px; border-radius: var(--radius-btn); overflow: hidden; border: 1px solid var(--border-strong); }
+  .seg-select { width: fit-content; }
+  .wave-opt, .seg-opt {
     font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600;
     background: transparent; color: var(--fg-faint); border: none;
     padding: var(--space-2) var(--space-3); cursor: pointer;
     transition: all var(--dur-fast) var(--ease-out); min-height: 36px;
   }
-  .wave-opt:hover { color: var(--fg); }
-  .wave-opt:focus-visible { outline: none; box-shadow: var(--shadow-ring); }
-  .wave-opt[aria-checked="true"] { background: var(--primary); color: #1d1208; }
+  .wave-opt:hover, .seg-opt:hover { color: var(--fg); }
+  .wave-opt:focus-visible, .seg-opt:focus-visible { outline: none; box-shadow: var(--shadow-ring); }
+  .wave-opt[aria-checked="true"], .seg-opt[aria-checked="true"] { background: var(--primary); color: #1d1208; }
+  .seg-select[aria-disabled="true"] { opacity: 0.45; }
+  .seg-select[aria-disabled="true"] .seg-opt { cursor: not-allowed; }
+
+  .preview-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-4);
+  }
+  .preview-head .panel-heading { margin-bottom: 0; }
+  .preview-head .seg-opt { min-height: 30px; padding: 4px var(--space-3); }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
@@ -388,7 +398,7 @@
   <header>
     <h1>Scala File Creator</h1>
     <p class="subtitle">A tool to create your own tunings from uploaded samples</p>
-    <p class="intro">Drop audio files of individual tones. Each file's fundamental frequency is detected and assembled into a downloadable Scala tuning file. The lowest frequency becomes the root — click any tone to set it as the new root. Use the tone generator to confirm accuracy of the analysis by ear.</p>
+    <p class="intro">Drop audio files of individual tones. Each file's fundamental frequency is detected and assembled into a downloadable tuning file — Scala (.scl) or AnaMark (.tun). The lowest frequency becomes the root — click any tone to set it as the new root. Use the tone generator to confirm accuracy of the analysis by ear.</p>
   </header>
 
   <main id="main">
@@ -431,6 +441,14 @@
                 <span class="toggle-thumb" aria-hidden="true"></span>
               </div>
               <span class="toggle-label" id="octaveFoldState">Off</span>
+            </div>
+          </div>
+          <div class="field">
+            <label id="repeatModeLabel">Keyboard Repeat (.tun only)</label>
+            <div class="toggle-desc">A .tun file gives every MIDI key an absolute pitch, so the scale is laid out from the root on note 60 and repeated to cover the keyboard. <b>Octave</b> repeats the tone set every 1200 cents. <b>Scale span</b> repeats at the interval between the lowest and highest tone, preserving the measured intervals but producing a non-octave repeat. With octave folding on, the repeat is always 1200 cents.</div>
+            <div class="seg-select" role="radiogroup" aria-labelledby="repeatModeLabel" id="repeatMode">
+              <button type="button" class="seg-opt" role="radio" aria-checked="true" data-repeat="octave">Octave (1200 ¢)</button>
+              <button type="button" class="seg-opt" role="radio" aria-checked="false" data-repeat="span">Scale span</button>
             </div>
           </div>
           <div class="field">
@@ -487,12 +505,19 @@
       </div>
 
       <div class="panel" role="region" aria-labelledby="preview-heading">
-        <div class="panel-heading" id="preview-heading">.scl preview</div>
-        <pre class="scl-preview" id="preview" tabindex="0" aria-label="Scala file preview">—</pre>
+        <div class="preview-head">
+          <div class="panel-heading" id="preview-heading">File preview</div>
+          <div class="seg-select" role="radiogroup" aria-label="Preview format" id="previewFormat">
+            <button type="button" class="seg-opt" role="radio" aria-checked="true" data-format="scl">.scl</button>
+            <button type="button" class="seg-opt" role="radio" aria-checked="false" data-format="tun">.tun</button>
+          </div>
+        </div>
+        <pre class="scl-preview" id="preview" tabindex="0" aria-label="Tuning file preview">—</pre>
       </div>
 
       <div class="full" style="display: flex; gap: var(--space-4); align-items: center; flex-wrap: wrap;">
         <button type="button" class="btn btn-teal" id="downloadBtn" disabled aria-describedby="download-hint">Download .scl</button>
+        <button type="button" class="btn btn-teal" id="downloadTunBtn" disabled aria-describedby="download-hint">Download .tun</button>
         <span id="download-hint" class="empty-state" style="padding: 0;"></span>
       </div>
 
@@ -524,7 +549,10 @@ const fileInput = document.getElementById('fileInput');
 const resultsEl = document.getElementById('results');
 const previewEl = document.getElementById('preview');
 const downloadBtn = document.getElementById('downloadBtn');
+const downloadTunBtn = document.getElementById('downloadTunBtn');
 const downloadHint = document.getElementById('download-hint');
+const repeatModeEl = document.getElementById('repeatMode');
+const previewFormatEl = document.getElementById('previewFormat');
 const scaleNameEl = document.getElementById('scaleName');
 const provenanceEl = document.getElementById('provenance');
 const provenanceError = document.getElementById('provenance-error');
@@ -541,6 +569,8 @@ let allDetected = [];
 let tones = [];
 let rootIdx = null;
 let overrides = {};
+let repeatMode = 'octave';   // 'octave' | 'span' — .tun keyboard repeat interval
+let previewFormat = 'scl';   // 'scl' | 'tun'
 
 // --- Tone generator state ---
 let genCtx = null, genOsc = null, genGain = null;
@@ -571,9 +601,39 @@ maxHzEl.addEventListener('change', reanalyze);
 octaveFoldEl.addEventListener('change', () => {
   octaveFoldEl.setAttribute('aria-checked', octaveFoldEl.checked);
   document.getElementById('octaveFoldState').textContent = octaveFoldEl.checked ? 'On' : 'Off';
+  syncRepeatModeUI();
   renderResults();
   renderPreview();
   announce(octaveFoldEl.checked ? 'Octave folding enabled' : 'Octave folding disabled');
+});
+
+// Folding already forces a 1200-cent period, so the repeat control is inert while it's on.
+function syncRepeatModeUI() {
+  const locked = octaveFoldEl.checked;
+  repeatModeEl.setAttribute('aria-disabled', locked ? 'true' : 'false');
+  repeatModeEl.querySelectorAll('.seg-opt').forEach(b => {
+    b.disabled = locked;
+    const active = locked ? b.dataset.repeat === 'octave' : b.dataset.repeat === repeatMode;
+    b.setAttribute('aria-checked', String(active));
+  });
+}
+
+repeatModeEl.addEventListener('click', e => {
+  const btn = e.target.closest('.seg-opt');
+  if (!btn || btn.disabled) return;
+  repeatMode = btn.dataset.repeat;
+  syncRepeatModeUI();
+  renderPreview();
+  announce(repeatMode === 'span' ? 'Keyboard repeat set to scale span' : 'Keyboard repeat set to octave');
+});
+
+previewFormatEl.addEventListener('click', e => {
+  const btn = e.target.closest('.seg-opt');
+  if (!btn) return;
+  previewFormat = btn.dataset.format;
+  previewFormatEl.querySelectorAll('.seg-opt').forEach(b =>
+    b.setAttribute('aria-checked', String(b.dataset.format === previewFormat)));
+  renderPreview();
 });
 
 // --- File handling ---
@@ -823,7 +883,97 @@ function buildScl() {
   return lines.join('\n') + '\n';
 }
 
-function renderPreview() { previewEl.textContent = buildScl() || '—'; }
+// --- .tun (AnaMark) ---
+// Unlike .scl, a .tun file is an absolute pitch table: every one of the 128 MIDI
+// keys needs a frequency. The root tone is anchored to MIDI note 60 and the tone
+// set is laid out on consecutive keys, repeating by REPEAT_PERIOD in each direction.
+const TUN_BASE_FREQ = 8.1757989156437073336;  // MIDI note 0 at A440, the .tun reference
+const TUN_ROOT_KEY = 60;
+
+// Returns { cents: [128 absolute cents above TUN_BASE_FREQ], period, degrees }
+function buildTunTable() {
+  if (!tones.length) return null;
+  const rootFreq = getRootFreq();
+  const fold = octaveFoldEl.checked;
+  const ri = rootIdx ?? 0;
+
+  let cycle;   // cents relative to the root, one full period, ascending
+  let period;
+  let shift = 0;
+
+  if (fold) {
+    cycle = tones.map(t => foldCents(centsAbove(t.freq, rootFreq)))
+      .sort((a, b) => a - b)
+      .filter((c, i, a) => i === 0 || Math.abs(c - a[i - 1]) > 0.5);
+    period = 1200;
+  } else {
+    const raw = tones.map(t => centsAbove(t.freq, rootFreq)).sort((a, b) => a - b);
+    if (repeatMode === 'span' && raw.length >= 2) {
+      // The top tone becomes the repeat interval, so it drops out of the cycle.
+      period = raw[raw.length - 1] - raw[0];
+      cycle = raw.slice(0, -1);
+      // If the root was the top tone it just left the cycle; re-anchor a period up.
+      if (!cycle.some(c => Math.abs(c) < 1e-9)) shift = period;
+    } else {
+      period = 1200;
+      cycle = raw;
+    }
+  }
+
+  const n = cycle.length;
+  if (!n) return null;
+  let r = shift ? 0 : cycle.findIndex(c => Math.abs(c) < 1e-9);
+  if (r < 0) r = 0;
+
+  const rootAbs = 1200 * Math.log2(rootFreq / TUN_BASE_FREQ);
+  const cents = [];
+  for (let k = 0; k < 128; k++) {
+    const j = k - TUN_ROOT_KEY + r;
+    const q = Math.floor(j / n);
+    const i = j - q * n;
+    // Clamp at the .tun floor (8.1758 Hz); keys below it flatten rather than go negative.
+    cents.push(Math.max(0, rootAbs + cycle[i] + q * period + shift));
+  }
+  return { cents, period, degrees: n, rootFreq, rootName: tones[ri].name };
+}
+
+function tunStr(s) { return String(s).replace(/[\r\n]+/g, ' ').trim(); }
+
+// Writes a version 1 AnaMark file: comment header, [Tuning], [Exact Tuning].
+// The metadata sections ([Scale Begin]/[Info]/[Scale End]) are v2-only constructs
+// and are deliberately omitted — provenance lives in the comment header instead.
+// Both note tables are fully enumerated, so [Exact Tuning] auto-completion (spec
+// 3.6.1) never fires and the mapping stays explicit.
+function buildTun() {
+  const table = buildTunTable();
+  if (!table) return '';
+  const name = scaleNameEl.value.trim() || 'Untitled scale';
+  const prov = provenanceEl.value.trim();
+  const fold = octaveFoldEl.checked;
+  const lines = [];
+
+  lines.push(`; AnaMark/VAZ 1.5 Plus tuning file (format version 1)`);
+  lines.push(`; ${tunStr(name)}`);
+  lines.push(`;`);
+  if (prov) { prov.split('\n').forEach(l => lines.push(`; ${tunStr(l)}`)); lines.push(`;`); }
+  if (fold) lines.push(`; Octave-folded`);
+  lines.push(`; Root (1/1): ${table.rootFreq.toFixed(3)} Hz — ${tunStr(table.rootName)}, mapped to MIDI note ${TUN_ROOT_KEY}`);
+  lines.push(`; ${table.degrees} tone${table.degrees !== 1 ? 's' : ''} per repeat, repeating every ${table.period.toFixed(5)} cents`);
+  lines.push(`; Generated ${new Date().toISOString().slice(0, 10)} by LS Tuner`);
+  lines.push(`;`);
+  lines.push(`[Tuning]`);
+  table.cents.forEach((c, k) => lines.push(`note ${k}=${Math.round(c)}`));
+  lines.push(``);
+  lines.push(`[Exact Tuning]`);
+  lines.push(`BaseFreq= ${TUN_BASE_FREQ.toFixed(10)}`);
+  table.cents.forEach((c, k) => lines.push(`note ${k}= ${c.toFixed(6)}`));
+  return lines.join('\n') + '\n';
+}
+
+function renderPreview() {
+  const text = previewFormat === 'tun' ? buildTun() : buildScl();
+  previewEl.textContent = text || '—';
+}
 
 // --- Validation ---
 function validateProvenance() {
@@ -837,24 +987,37 @@ function updateDownloadState() {
   const hasTones = tones.length >= 1;
   const hasProv = !!provenanceEl.value.trim();
   downloadBtn.disabled = !(hasTones && hasProv);
+  downloadTunBtn.disabled = downloadBtn.disabled;
   if (!hasTones && !hasProv) downloadHint.textContent = 'Upload files and add description to enable download.';
   else if (!hasTones) downloadHint.textContent = 'Upload audio files with detectable tones.';
   else if (!hasProv) downloadHint.textContent = 'Add description to enable download.';
   else downloadHint.textContent = '';
 }
 
+function downloadText(text, ext) {
+  const name = slug(scaleNameEl.value.trim() || 'scale');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${name}.${ext}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 downloadBtn.addEventListener('click', () => {
   if (!validateProvenance()) { provenanceEl.focus(); return; }
   const scl = buildScl();
   if (!scl) return;
-  const name = slug(scaleNameEl.value.trim() || 'scale');
-  const blob = new Blob([scl], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `${name}.scl`;
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadText(scl, 'scl');
   announce('Scala file downloaded');
+});
+
+downloadTunBtn.addEventListener('click', () => {
+  if (!validateProvenance()) { provenanceEl.focus(); return; }
+  const tun = buildTun();
+  if (!tun) return;
+  downloadText(tun, 'tun');
+  announce('AnaMark tuning file downloaded');
 });
 
 // =====================================================================
@@ -1122,6 +1285,7 @@ function announce(msg) { srAnnounce.textContent = ''; requestAnimationFrame(() =
 
 // Initial state
 updateDownloadState();
+syncRepeatModeUI();
 drawWheel();
 </script>
 </body>
