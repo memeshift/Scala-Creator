@@ -391,10 +391,8 @@
         <strong>harmonic</strong>, and they add up to a waveform that repeats over and over, like a loop.
       </p>
       <p>
-        A struck bronze bar — a saron in a gamelan — follows different physics. Its partials sit at ratios like
-        <strong>1 : 2.76 : 5.40</strong>. Nothing lines up, so the waveform <em>never repeats</em> — and the
-        standard assumptions in the math behind the algorithm fall apart. That single fact decides which pitch-detection methods work
-        and which ones fail.
+        A struck bronze bar — a saron in a Javanese gamelan — follows different physics. Its partials can sit at ratios like
+        <strong>1 : 2.76 : 5.40</strong>. Nothing lines up, so the waveform <em>never repeats</em> — and standard assumptions in the math behind a particular algorithm can fall apart. Thusly, some methods will reliably find the pitch of 'smoother' sounding harmonic instruments, while others will do better on 'metallic', inharmonic ones.
       </p>
 
       <div class="panel">
@@ -576,6 +574,28 @@
             measure, so it fails <em>by design</em>. Included here as the instructive wrong tool.
           </p>
         </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-heading">Method 4 in action — cepstrum of the <span id="cepWhich">guitar-like tone</span></div>
+        <p style="font-size:0.95rem;">
+          The cepstrum doesn't look for peaks — it looks for the <em>rhythm</em> of the peaks. Evenly spaced
+          partials make the spectrum ripple, and that ripple shows up here as one tall spike whose position
+          <em>is</em> the period of the note. Switch instruments and watch what happens to the spike. The dashed
+          line marks where it <em>should</em> land if the lowest partial is the pitch.
+        </p>
+        <div class="controls-row">
+          <div class="seg" role="group" aria-label="Instrument">
+            <button type="button" data-specmode="harmonic" aria-pressed="true">Guitar-like</button>
+            <button type="button" data-specmode="gamelan" aria-pressed="false">Saron bar</button>
+            <button type="button" data-specmode="gong" aria-pressed="false">Bossed gong</button>
+            <button type="button" data-specmode="bell" aria-pressed="false">Bell</button>
+          </div>
+          <span class="muted" style="font-size:0.8rem;">shares the selection with the spectrum explorer above</span>
+        </div>
+        <canvas class="viz" id="cepCanvas" height="200" aria-label="Cepstrum of the selected instrument"></canvas>
+        <div style="margin-top:12px;"><span class="readout" id="cepReadout"></span></div>
+        <p class="muted" style="font-size:0.85rem; margin-top:8px;" id="cepCaption"></p>
       </div>
 
       <details class="hood">
@@ -1305,15 +1325,20 @@ specCanvas.addEventListener('click', e => {
   }
 });
 
+// Two switchers drive this one selection — the spectrum explorer's and the
+// cepstrum panel's. Press state is set by value so both groups stay in sync.
 document.querySelectorAll('[data-specmode]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('[data-specmode]').forEach(b => b.setAttribute('aria-pressed', 'false'));
-    btn.setAttribute('aria-pressed', 'true');
-    spec.mode = btn.dataset.specmode;
+    const mode = btn.dataset.specmode;
+    document.querySelectorAll('[data-specmode]').forEach(b => {
+      b.setAttribute('aria-pressed', b.dataset.specmode === mode ? 'true' : 'false');
+    });
+    spec.mode = mode;
     spec.hover = -1; spec.selected = -1;
     specReadout.textContent = 'Hover a peak…';
     specCaption.textContent = SPEC_CAPTIONS[spec.mode];
     drawSpec();
+    updateCep();
   });
 });
 document.getElementById('specPlay').addEventListener('click', () => {
@@ -1413,6 +1438,190 @@ function drawInterp() {
 }
 
 interpSlider.addEventListener('input', drawInterp);
+
+/* ============================================================
+   Chapter 3c: Cepstrum (follows the Chapter 3a instrument switch)
+
+   Real arithmetic, not a drawn impression: we synthesise a log-magnitude
+   spectrum from the instrument's partials and take its cosine transform.
+   Whatever peak appears is whatever the maths actually produces.
+   ============================================================ */
+const cepCanvas = document.getElementById('cepCanvas');
+const cepReadout = document.getElementById('cepReadout');
+const cepCaption = document.getElementById('cepCaption');
+const cepWhich = document.getElementById('cepWhich');
+
+// Matches the switcher button labels, not INSTRUMENTS.label ("Harmonic tone").
+const CEP_WHICH = {
+  harmonic: 'guitar-like tone', gamelan: 'saron bar',
+  gong: 'bossed gong', bell: 'bell'
+};
+
+const CEP_BINS = 900;        // spectral samples across the modelled band
+const CEP_POINTS = 420;      // quefrency samples drawn
+const CEP_FLOOR = 0.35;      // ignore below this × the expected period (spectral envelope)
+const cepCache = {};
+
+// Log-magnitude spectrum of the instrument, mean-removed so c(0) doesn't swamp the plot.
+function cepLogSpectrum(mode) {
+  const inst = INSTRUMENTS[mode];
+  const topRatio = inst.partials[inst.partials.length - 1][0];
+  const fMax = inst.f0 * (topRatio + 1.5);
+  const binHz = fMax / CEP_BINS;
+  const sigma = inst.f0 * 0.045;
+  const L = new Float64Array(CEP_BINS);
+  let mean = 0;
+  for (let k = 0; k < CEP_BINS; k++) {
+    const f = k * binHz;
+    let m = 0.004; // noise floor
+    for (let p = 0; p < inst.partials.length; p++) {
+      const d = (f - inst.f0 * inst.partials[p][0]) / sigma;
+      m += inst.partials[p][1] * Math.exp(-d * d);
+    }
+    L[k] = Math.log(m);
+    mean += L[k];
+  }
+  mean /= CEP_BINS;
+  for (let k = 0; k < CEP_BINS; k++) L[k] -= mean;
+  return { L, binHz };
+}
+
+// Real cepstrum sampled at continuous quefrency, so the curve stays smooth
+// regardless of how few partials the band contains.
+function cepCurve(mode) {
+  if (cepCache[mode]) return cepCache[mode];
+  const inst = INSTRUMENTS[mode];
+  const { L, binHz } = cepLogSpectrum(mode);
+  const tauMax = 4 / inst.f0;
+  const vals = new Float64Array(CEP_POINTS);
+  for (let i = 0; i < CEP_POINTS; i++) {
+    const tau = (i / (CEP_POINTS - 1)) * tauMax;
+    const w = 2 * Math.PI * binHz * tau;
+    let s = 0;
+    for (let k = 0; k < CEP_BINS; k++) s += L[k] * Math.cos(w * k);
+    vals[i] = s / CEP_BINS;
+  }
+
+  // strongest peak above the envelope region, parabolically refined
+  const first = Math.ceil((CEP_FLOOR / 4) * (CEP_POINTS - 1));
+  let best = first;
+  for (let i = first; i < CEP_POINTS; i++) if (vals[i] > vals[best]) best = i;
+  let refined = best;
+  if (best > 0 && best < CEP_POINTS - 1) {
+    const denom = vals[best - 1] - 2 * vals[best] + vals[best + 1];
+    if (denom !== 0) refined = best + 0.5 * (vals[best - 1] - vals[best + 1]) / denom;
+  }
+
+  let lo = Infinity, hi = -Infinity;
+  for (let i = first; i < CEP_POINTS; i++) { if (vals[i] < lo) lo = vals[i]; if (vals[i] > hi) hi = vals[i]; }
+
+  const out = {
+    vals, tauMax, first,
+    peakTau: (refined / (CEP_POINTS - 1)) * tauMax,
+    peakVal: vals[best],
+    lo, hi
+  };
+  cepCache[mode] = out;
+  return out;
+}
+
+function drawCep() {
+  const { ctx, w, h } = setupCanvas(cepCanvas);
+  ctx.clearRect(0, 0, w, h);
+  const inst = INSTRUMENTS[spec.mode];
+  const c = cepCurve(spec.mode);
+  const padL = 15, padR = 15;
+  const base = h - 26, top = 22;
+  const span = Math.max(c.hi - c.lo, 1e-9);
+  const xOf = tau => padL + (tau / c.tauMax) * (w - padL - padR);
+  const yOf = v => base - ((v - c.lo) / span) * (base - top);
+
+  // envelope region — real cepstral pitch trackers ignore it
+  const floorX = xOf(CEP_FLOOR / inst.f0);
+  ctx.fillStyle = 'rgba(248,221,167,0.05)';
+  ctx.fillRect(padL, top, floorX - padL, base - top);
+  ctx.font = '11px Archivo, sans-serif';
+  ctx.fillStyle = C.creamFaint;
+  ctx.textAlign = 'left';
+  ctx.fillText('envelope', padL + 4, top + 12);
+
+  // expected period from the lowest partial
+  const expX = xOf(1 / inst.f0);
+  ctx.strokeStyle = C.tealSoft;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(expX, top); ctx.lineTo(expX, base); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = C.teal;
+  ctx.textAlign = 'center';
+  ctx.fillText('period of lowest partial', Math.min(Math.max(expX, 78), w - 78), base + 16);
+
+  // the cepstrum itself
+  ctx.strokeStyle = C.creamFaint;
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  for (let i = c.first; i < CEP_POINTS; i++) {
+    const x = xOf((i / (CEP_POINTS - 1)) * c.tauMax);
+    const y = yOf(c.vals[i]);
+    if (i === c.first) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // where the cepstrum says the period is
+  const err = Math.abs(c.peakTau * inst.f0 - 1);
+  const good = err < 0.02;
+  const px = xOf(c.peakTau), py = yOf(c.peakVal);
+  ctx.strokeStyle = good ? C.ok : C.danger;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, base); ctx.stroke();
+  ctx.fillStyle = good ? C.ok : C.danger;
+  ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.textAlign = px > w * 0.62 ? 'right' : 'left';
+  ctx.fillText('cepstral peak', px + (px > w * 0.62 ? -9 : 9), py - 7);
+
+  // quefrency axis in ms
+  ctx.fillStyle = C.creamFaint;
+  ctx.textAlign = 'center';
+  const stepMs = c.tauMax * 1000 / 4;
+  for (let t = 0; t <= 4; t++) {
+    ctx.fillText((stepMs * t).toFixed(1) + ' ms', xOf((t / 4) * c.tauMax), h - 6);
+  }
+}
+
+// Report what the maths returned, in Hz and cents against the lowest partial.
+function updateCepReadout() {
+  const inst = INSTRUMENTS[spec.mode];
+  const c = cepCurve(spec.mode);
+  const hz = 1 / c.peakTau;
+  const cents = 1200 * Math.log2(hz / inst.f0);
+  const octaves = cents / 1200;
+  let off;
+  if (Math.abs(cents) < 10) {
+    off = '<strong>spot on</strong>';
+  } else if (Math.abs(octaves - Math.round(octaves)) < 0.025 && Math.round(octaves) !== 0) {
+    const n = Math.abs(Math.round(octaves));
+    off = '<strong>' + (n === 1 ? 'an octave' : n + ' octaves') + ' ' +
+          (cents > 0 ? 'above' : 'below') + '</strong> it';
+  } else {
+    off = '<strong>' + (cents > 0 ? '+' : '') + Math.round(cents) + ' cents</strong> from it';
+  }
+  cepReadout.innerHTML =
+    'Peak at <strong>' + (c.peakTau * 1000).toFixed(2) + ' ms</strong> → reads the pitch as <strong>' +
+    hz.toFixed(1) + ' Hz</strong>. Lowest partial is ' + inst.f0 + ' Hz — ' + off + '.';
+}
+
+const CEP_CAPTIONS = {
+  harmonic: 'Textbook. Four evenly spaced harmonics ripple the spectrum at one rate, and the cepstrum returns one unambiguous spike at the period of the note. This is the case the method was invented for.',
+  gamelan: 'There is still a tall, confident-looking spike, however it is simply in the wrong place, because the method averaged spacings that were never equal to begin with. This gives a wrong answer that looks exactly as convincing as a right one.',
+  gong: 'A near miss, which is its own kind of trap. The gong’s modes sit close to whole-number ratios, so a coherent spike does form — but slightly off, and on gongs whose pitch rides the 2nd or 3rd partial the spike is answering a different question than the one you asked.',
+  bell: 'The bell’s modelled partials are largely whole-number multiples of the hum, so a clear spike does appear — an octave below the hum, and two octaves below the strike note you actually hear. Coherent, confident, and nowhere near the perceived pitch.'
+};
+
+function updateCep() {
+  drawCep();
+  updateCepReadout();
+  cepWhich.textContent = CEP_WHICH[spec.mode];
+  cepCaption.textContent = CEP_CAPTIONS[spec.mode];
+}
 
 /* ============================================================
    Chapter 4: CREPE illustration
@@ -1556,6 +1765,7 @@ function drawAll() {
   updateLag();
   drawSpec();
   drawInterp();
+  drawCep();
   drawCrepe();
 }
 
@@ -1564,6 +1774,7 @@ buildLagSignal();
 specCaption.textContent = SPEC_CAPTIONS[spec.mode];
 renderShowdown('harmonic');
 drawAll();
+updateCep();
 
 let resizeTimer = null;
 window.addEventListener('resize', () => {
