@@ -343,7 +343,7 @@
   /* --- Collapsible tone generator --- */
   details.tone-gen { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); margin-top: var(--space-3); }
   details.tone-gen summary {
-    font-family: var(--font-sans); font-size: 0.82rem; font-weight: 600; color: var(--fg-muted);
+    font-family: var(--font-sans); font-size: 0.82rem; font-weight: 600; color: var(--heading);
     cursor: pointer; padding: var(--space-3) var(--space-4); list-style: none;
     display: flex; align-items: center; gap: var(--space-3); min-height: 44px;
     transition: color var(--dur-fast) var(--ease-out); user-select: none;
@@ -351,18 +351,27 @@
   details.tone-gen summary::-webkit-details-marker { display: none; }
   details.tone-gen summary::before {
     content: '→'; display: inline-block;
-    transition: transform var(--dur) var(--ease-out); color: var(--fg-faint);
+    transition: transform var(--dur) var(--ease-out); color: currentColor;
   }
   details.tone-gen[open] summary::before { transform: rotate(90deg); }
-  details.tone-gen summary:hover { color: var(--primary); }
+  details.tone-gen summary:hover { color: var(--primary-hover); }
   details.tone-gen summary:focus-visible { outline: none; box-shadow: var(--shadow-ring); border-radius: var(--radius-md); }
 
-  .tone-gen-body { padding: var(--space-4); padding-top: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+  /* Query container for the controls row below: whether the level slider wraps depends on the
+     panel's width, not the viewport's (the panel is ~half-width in the two-column grid). */
+  .tone-gen-body {
+    container-type: inline-size;
+    padding: var(--space-4); padding-top: 0; display: flex; flex-direction: column; gap: var(--space-4);
+  }
   .gen-row { display: flex; align-items: flex-start; gap: var(--space-4); flex-wrap: wrap; }
+  .gen-row--freq { flex-direction: column; align-items: stretch; gap: var(--space-3); }
+  .gen-row--controls { align-items: center; }
+  .gen-play { width: 100%; }
 
   /* --- Hz Wheel --- */
   .hz-wheel-wrap {
-    flex: 1 1 240px;
+    flex: 0 0 auto;   /* row is column-direction now — a flex-basis here would set height, not width */
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
@@ -383,18 +392,55 @@
     text-align: center;
   }
 
+  /* Fixed input width keeps the centred cluster from shifting as the value's digit count changes. */
   .hz-input-wrap {
-    display: flex; align-items: center; gap: 4px;
-    height: 52px;
+    display: flex; align-items: baseline; justify-content: center; gap: 6px;
+    padding: var(--space-2) 0 0;
   }
-  .hz-input {
-    font-family: var(--font-sans); font-size: 1.4rem; font-weight: 700;
-    color: var(--orange-300); background: transparent; border: none; border-bottom: 1px solid var(--border);
-    width: 10ch; text-align: right; padding: 2px 0;
-    transition: border-color var(--dur-fast) var(--ease-out);
+  /* Type selector needed: the generic input[type="text"] rule above is more specific than a bare
+     class, and would otherwise force 1rem, a --bg fill, a border and width:100% onto the readout.
+     Same reason input[type="number"].tone-hz-input is qualified. */
+  input[type="text"].hz-input {
+    /* Same clamp as the h1 rule, so the readout tracks the page title's scale and never exceeds it. */
+    font-family: var(--font-serif); font-weight: 600;
+    font-size: clamp(2rem, 3.4vw, 3rem);
+    line-height: 1.1; letter-spacing: -0.02em;
+    color: var(--fg); background: transparent; border: none;
+    width: 8ch; text-align: center; padding: 0;
+    font-variant-numeric: tabular-nums;
+    transition: color var(--dur-fast) var(--ease-out);
   }
-  .hz-input:focus { outline: none; border-color: var(--ring); }
-  .hz-unit { font-family: var(--font-sans); font-size: 0.8rem; color: var(--fg-faint); }
+  input[type="text"].hz-input:focus { outline: none; color: var(--primary); }
+  .hz-unit {
+    font-family: var(--font-sans); font-size: 0.82rem; font-weight: 600;
+    letter-spacing: 0.06em; color: var(--fg-faint);
+  }
+
+  /* --- Level slider --- */
+  .vol-ctl { display: flex; align-items: center; gap: var(--space-2); flex: 1 1 190px; min-width: 170px; }
+  .vol-label {
+    font-family: var(--font-sans); font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-faint);
+  }
+  .vol-slider {
+    -webkit-appearance: none; appearance: none;
+    flex: 1 1 auto; min-width: 70px; height: 20px;
+    background: transparent; cursor: pointer;
+  }
+  .vol-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--border-strong); }
+  .vol-slider::-moz-range-track { height: 4px; border-radius: 2px; background: var(--border-strong); }
+  .vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; border: none;
+    width: 14px; height: 14px; margin-top: -5px; border-radius: 50%; background: var(--primary);
+  }
+  .vol-slider::-moz-range-thumb { width: 14px; height: 14px; border: none; border-radius: 50%; background: var(--primary); }
+  .vol-slider:focus-visible { outline: none; }
+  .vol-slider:focus-visible::-webkit-slider-thumb { box-shadow: var(--shadow-ring); }
+  .vol-slider:focus-visible::-moz-range-thumb { box-shadow: var(--shadow-ring); }
+  .vol-readout {
+    font-family: var(--font-sans); font-size: 0.72rem; color: var(--fg-muted);
+    width: 4ch; text-align: right; font-variant-numeric: tabular-nums;
+  }
 
   .wave-select, .seg-select { display: flex; gap: 2px; border-radius: var(--radius-btn); overflow: hidden; border: 1px solid var(--border-strong); }
   .seg-select { width: fit-content; }
@@ -409,6 +455,21 @@
   .wave-opt[aria-checked="true"], .seg-opt[aria-checked="true"] { background: var(--primary); color: #1d1208; }
   .seg-select[aria-disabled="true"] { opacity: 0.45; }
   .seg-select[aria-disabled="true"] .seg-opt { cursor: not-allowed; }
+
+  /* Waveform keeps its intrinsic width; the level control takes the remainder, or wraps to
+     its own line rather than compressing below a usable slider width. */
+  .gen-row--controls .wave-select { flex: 0 0 auto; }
+
+  /* Below the wrap point the two controls each take a full row, so the waveform buttons
+     stretch to fill theirs instead of leaving the rest of the line empty. The pair needs
+     ~390px (waveform ~200px + 16px gap + the level control's 170px minimum); the threshold
+     is set above that so the query always fires before flex would wrap on its own —
+     otherwise there'd be a band where the slider drops but the buttons don't expand. */
+  @container (max-width: 440px) {
+    .gen-row--controls .wave-select { flex: 1 1 100%; }
+    .gen-row--controls .wave-opt { flex: 1 1 0; min-width: 0; }
+    .vol-ctl { flex: 1 1 100%; }
+  }
 
   .preview-head {
     display: flex; align-items: center; justify-content: space-between;
@@ -449,7 +510,7 @@
 
       <div class="panel" role="region" aria-labelledby="tones-heading">
         <div class="panel-heading" id="tones-heading">Detected tones</div>
-        <div class="toggle-desc">Pitch detection isn't always exact — it can lock onto a harmonic instead of the fundamental pitch. To check by ear, preview a tone, dial the reference tone generator to its Hz, and play both: a slow wavering pulse means they're close but not matched. Nudge the Hz until the pulse disappears.</div>
+        <div class="toggle-desc">Pitch detection isn't always exact — it can lock onto a harmonic instead of the fundamental pitch. To check by ear, preview a tone, dial the Reference Tone Generator to its Hz, and play both: a slow wavering pulse means they're close but not matched. Nudge the Hz until the pulse disappears.</div>
         <div id="results" aria-live="polite"><p class="empty-state">Nothing analyzed yet.</p></div>
 
         <div class="panel-controls">
@@ -482,9 +543,14 @@
         </div>
 
         <details class="tone-gen">
-          <summary>Reference tone generator</summary>
+          <summary>Reference Tone Generator</summary>
           <div class="tone-gen-body">
-            <div class="gen-row">
+            <div class="gen-row gen-row--freq">
+              <div class="hz-input-wrap">
+                <input type="text" id="hzInput" class="hz-input" value="60.000"
+                  inputmode="decimal" aria-label="Frequency in Hz">
+                <span class="hz-unit">Hz</span>
+              </div>
               <div class="hz-wheel-wrap">
                 <canvas id="hzWheel" class="hz-wheel" tabindex="0"
                   role="slider" aria-label="Frequency wheel"
@@ -492,22 +558,21 @@
                   aria-valuetext="60.000 Hz"></canvas>
                 <div class="hz-wheel-hint">drag to sweep — scroll or shift+drag to fine-tune</div>
               </div>
-              <div>
-                <div class="hz-input-wrap">
-                  <input type="text" id="hzInput" class="hz-input" value="60.000"
-                    inputmode="decimal" aria-label="Frequency in Hz">
-                  <span class="hz-unit">Hz</span>
-                </div>
-              </div>
             </div>
-            <div class="gen-row">
+            <div class="gen-row gen-row--controls">
               <div class="wave-select" role="radiogroup" aria-label="Waveform type">
                 <button type="button" class="wave-opt" role="radio" aria-checked="false" data-wave="sine">sine</button>
                 <button type="button" class="wave-opt" role="radio" aria-checked="true" data-wave="triangle">triangle</button>
                 <button type="button" class="wave-opt" role="radio" aria-checked="false" data-wave="sawtooth">sawtooth</button>
               </div>
-              <button type="button" class="btn btn-primary btn-sm" id="toneToggle" aria-pressed="false">Play tone</button>
+              <div class="vol-ctl">
+                <label class="vol-label" for="volSlider">Level</label>
+                <input type="range" id="volSlider" class="vol-slider" min="0" max="100" step="1" value="50"
+                  aria-label="Reference tone level" aria-valuetext="50 percent">
+                <span class="vol-readout" id="volReadout">50%</span>
+              </div>
             </div>
+            <button type="button" class="btn btn-primary gen-play" id="toneToggle" aria-pressed="false">Play tone</button>
           </div>
         </details>
       </div>
@@ -568,7 +633,7 @@
           <div class="tone-gen-body" style="padding-top: var(--space-4);">
             <p style="font-family: var(--font-serif); font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.62; margin-bottom: var(--space-4);">The tool uses an algorithm called NSDF (Normalized Square Difference Function), a refined form of autocorrelation. In short: it takes a short slice from the sustained portion of each uploaded file — skipping the attack transient — and looks for the point at which the signal most closely repeats itself. That repetition period corresponds to the fundamental frequency, which becomes the Hz reading.</p>
             <p style="font-family: var(--font-serif); font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.62; margin-bottom: var(--space-4);">This works reliably on sounds with a clear, sustained fundamental. Metallic percussion — gamelan bars, bells, bonang — tends to produce accurate results, as do most sustained pitched instruments. The Detection Range setting constrains which frequencies the algorithm considers, which reduces the chance of locking onto a harmonic instead of the fundamental.</p>
-            <p style="font-family: var(--font-serif); font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.62; margin-bottom: var(--space-4);">Some materials are harder. Muted or fast-decaying sounds — bamboo instruments like jegog, for instance — have little sustained energy for the algorithm to analyze. Large gongs and bells can be ambiguous because their perceived pitch doesn't always align with their lowest spectral partial. Instruments with unusually dense or inharmonic overtone structures may produce inconsistent readings. In any of these cases, the Hz field in each tone row can be edited manually, and the reference tone generator is there to verify by ear.</p>
+            <p style="font-family: var(--font-serif); font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.62; margin-bottom: var(--space-4);">Some materials are harder. Muted or fast-decaying sounds — bamboo instruments like jegog, for instance — have little sustained energy for the algorithm to analyze. Large gongs and bells can be ambiguous because their perceived pitch doesn't always align with their lowest spectral partial. Instruments with unusually dense or inharmonic overtone structures may produce inconsistent readings. In any of these cases, the Hz field in each tone row can be edited manually, and the Reference Tone Generator is there to verify by ear.</p>
             <p style="font-family: var(--font-serif); font-size: 0.875rem; color: var(--fg-faint); line-height: 1.62;"><b>Credits &amp; Inspirations:</b> This project is inspired by <a href="https://www.latentsonorities.org/" style="color: var(--link);" target="_blank" rel="noopener">Latent Sonorities</a> and <a href="https://isartum.net/leimma" style="color: var(--link);" target="_blank" rel="noopener">Leimma</a> and a conversation between <a href="https://www.memeshift.com" style="color: var(--link);" target="_blank" rel="noopener">Morgan Sully</a> and <a href="https://scholar.google.com/citations?user=UXWpcQ4AAAAJ&hl=en" style="color: var(--link);" target="_blank" rel="noopener">Laurel Pardue</a>. It was originally built to be used with gamelanic instruments in mind. Check out the <a href="https://github.com/memeshift/Scala-Creator" style="color: var(--link);" target="_blank" rel="noopener">GitHub repository</a> for detailed technical notes on the pitch detection methods. Issues and pull requests are welcome. </p>
           </div>
         </details>
@@ -602,6 +667,8 @@ const maxHzEl = document.getElementById('maxHz');
 const hzWheel = document.getElementById('hzWheel');
 const hzInput = document.getElementById('hzInput');
 const toneToggle = document.getElementById('toneToggle');
+const volSlider = document.getElementById('volSlider');
+const volReadout = document.getElementById('volReadout');
 const octaveFoldEl = document.getElementById('octaveFold');
 const srAnnounce = document.getElementById('srAnnounce');
 
@@ -618,7 +685,11 @@ let genCtx = null, genOsc = null, genGain = null;
 let genPlaying = false;
 let genWave = 'triangle';
 let genHz = 60;
+let genVol = 0.5;                // slider position, 0..1
 const GEN_MIN = 20, GEN_MAX = 8000;
+const GEN_MAX_GAIN = 0.6;        // amplitude at full slider
+// Square the slider position so the travel tracks perceived loudness rather than raw amplitude.
+function genAmp() { return GEN_MAX_GAIN * genVol * genVol; }
 
 // --- Sample preview state (separate context so it can sound alongside the generator) ---
 let previewCtx = null;
@@ -1276,6 +1347,14 @@ waveOpts.forEach(btn => {
   });
 });
 
+// --- Level ---
+volSlider.addEventListener('input', () => {
+  genVol = parseInt(volSlider.value, 10) / 100;
+  volReadout.textContent = volSlider.value + '%';
+  volSlider.setAttribute('aria-valuetext', volSlider.value + ' percent');
+  if (genGain && genCtx) genGain.gain.setTargetAtTime(genAmp(), genCtx.currentTime, 0.02);
+});
+
 // --- Play / Stop ---
 toneToggle.addEventListener('click', () => {
   if (genPlaying) stopGen(); else startGen();
@@ -1289,7 +1368,7 @@ function startGen() {
   genOsc.type = genWave;
   genOsc.frequency.setValueAtTime(genHz, genCtx.currentTime);
   genGain.gain.setValueAtTime(0, genCtx.currentTime);
-  genGain.gain.linearRampToValueAtTime(0.15, genCtx.currentTime + 0.05); // fade in to avoid click
+  genGain.gain.linearRampToValueAtTime(genAmp(), genCtx.currentTime + 0.05); // fade in to avoid click
   genOsc.connect(genGain).connect(genCtx.destination);
   genOsc.start();
   genPlaying = true;
@@ -1299,6 +1378,7 @@ function startGen() {
 
 function stopGen() {
   if (genGain && genCtx) {
+    genGain.gain.setValueAtTime(genGain.gain.value, genCtx.currentTime); // pin current value so the ramp starts from it
     genGain.gain.linearRampToValueAtTime(0, genCtx.currentTime + 0.05); // fade out
     setTimeout(() => {
       if (genOsc) { try { genOsc.stop(); } catch(e){} }
