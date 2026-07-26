@@ -335,6 +335,37 @@
 
   .table-scroll { overflow-x: auto; }
 
+  /* Three prose columns can't hold their shape on a phone, so each row becomes
+     a stacked card: method, then verdict, then the reasoning. Header is hidden
+     visually but kept in the DOM — the icon and colour already label the verdict. */
+  @media (max-width: 780px) {
+    .table-scroll { overflow-x: visible; }
+    table.showdown { margin-top: var(--space-3); }
+    table.showdown, table.showdown tbody, table.showdown tr, table.showdown td {
+      display: block; width: 100%;
+    }
+    table.showdown thead {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+    table.showdown tr {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4);
+      margin-bottom: var(--space-3);
+    }
+    table.showdown tr:last-child { margin-bottom: 0; }
+    table.showdown td { border-bottom: none; padding: 0; }
+    td.method-name { white-space: normal; margin-bottom: 4px; }
+    td.verdict { white-space: normal; font-size: 0.95rem; margin-bottom: var(--space-2); }
+    td.why { font-size: 0.875rem; line-height: 1.55; }
+
+    /* Segmented switches are wider than a phone; let them fill and wrap
+       instead of pushing the panel sideways. */
+    .seg { display: flex; flex-wrap: wrap; }
+    .seg button { flex: 1 1 auto; }
+  }
+
   footer.page {
     margin-top: var(--space-7); padding-top: var(--space-5);
     border-top: 1px solid var(--border);
@@ -570,8 +601,9 @@
           <p>
             A clever speech-processing trick: it measures the <em>spacing</em> between spectral peaks.
             Brilliant when peaks are evenly spaced — which is exactly what harmonic sounds have and
-            gamelan sounds don't. On a saron's unevenly-spaced partials there is no consistent spacing to
-            measure, so it fails <em>by design</em>. Included here as the instructive wrong tool.
+            gamelan sounds don't. The instructive part is that it doesn't fall silent on a saron: it averages
+            spacings that were never equal and hands back a confident spike at a period no partial has.
+            Included here as the wrong tool, and as a lesson in output that looks like an answer.
           </p>
         </div>
       </div>
@@ -604,7 +636,7 @@
           <p>With the peak bin k and its neighbours' dB magnitudes y₋₁, y₀, y₊₁, the parabolic offset from the bin centre is:</p>
           <div class="formula">δ = ½ · (y₋₁ − y₊₁) / (y₋₁ − 2y₀ + y₊₁),&nbsp;&nbsp; f ≈ (k + δ) · sampleRate / N</div>
           <p>With zero-padding, error drops below 0.1% of frequency — sub-cent for a clean partial. One practical note: the Web Audio <code>AnalyserNode</code>'s default FFT is far too coarse for this; a custom zero-padded FFT is required.</p>
-          <p>The cepstrum is the inverse FFT of the log-magnitude spectrum. Evenly spaced harmonics create a ripple in the log spectrum whose "frequency" (called <em>quefrency</em>) equals the pitch period — it shows up as one sharp cepstral peak. Uneven inharmonic partials produce no coherent ripple, hence no peak.</p>
+          <p>The cepstrum is the inverse FFT of the log-magnitude spectrum. Evenly spaced harmonics create a ripple in the log spectrum whose "frequency" (called <em>quefrency</em>) equals the pitch period — it shows up as one sharp cepstral peak. Uneven inharmonic partials produce no coherent ripple — but note what that does <em>not</em> mean. The transform still returns something: a peak at whatever period best fits mutually incompatible spacings, or, where partials are near-integer multiples, a peak at a genuine periodicity that isn’t the perceived pitch. Absence of structure produces a wrong reading, not a blank one, which is why the panel above is worth switching through.</p>
         </div>
       </details>
     </section>
@@ -1695,7 +1727,7 @@ const VERDICTS = {
       ['NSDF / McLeod', 'time', 'ok', 'Usually right', 'No true period, but the fundamental’s peak still wins the match-score contest — which is why it’s Scala Creator’s engine today.'],
       ['YIN / pYIN', 'time', 'risky', 'Wobbly', 'Its "first dip" rule can latch onto a compromise period among the clashing partials.'],
       ['Interpolated FFT', 'freq', 'ok', 'Right answer, sub-cent', 'Reads the lowest strong partial directly — the note the maker tuned. The physically correct method here.'],
-      ['Cepstrum', 'freq', 'bad', 'Fails by design', 'It measures peak spacing; these peaks have no even spacing to measure.'],
+      ['Cepstrum', 'freq', 'bad', 'Confidently wrong', 'A tall spike does appear — that is the trap. The gaps here are 581, 871 and 1165 Hz, and the method resolves them into a single compromise period that belongs to no partial at all. It reports 296 Hz for a bar tuned to 330: 186 cents flat, and nothing in the output admits to any doubt.'],
       ['CREPE', 'ml', 'risky', 'Unverified', 'Never trained on metallophones. Might be right; no guarantee, and 20-cent bins are coarse for tuning.']
     ]
   },
@@ -1705,7 +1737,7 @@ const VERDICTS = {
       ['NSDF / McLeod', 'time', 'risky', 'Octave roulette', 'Two strong near-2:1 components create rival peaks an octave apart; the tallest isn’t always the note.'],
       ['YIN / pYIN', 'time', 'risky', 'Octave roulette', 'Same trap: the first dip may correspond to either mode.'],
       ['Interpolated FFT', 'freq', 'ok', 'Right — with a fence', 'On some gongs the pitch sits on the 2nd or 3rd partial, so "lowest peak" needs the frequency-range control to fence out the wrong candidates.'],
-      ['Cepstrum', 'freq', 'bad', 'Fails', 'Sparse, uneven partials produce no coherent cepstral peak.'],
+      ['Cepstrum', 'freq', 'risky', 'Flat by ~22 cents', 'The gong’s modes sit near enough to whole-number ratios that a coherent spike really does form, close to the right place. But “close” is 22 cents — a fifth of a semitone. An answer of the right shape at the wrong precision is the hardest kind to catch, because nothing about it looks broken.'],
       ['CREPE', 'ml', 'risky', 'Unverified', 'Authors themselves flag "noisy results for uncommon instruments."']
     ]
   },
@@ -1715,7 +1747,7 @@ const VERDICTS = {
       ['NSDF / McLeod', 'time', 'bad', 'Wrong', 'No period to find, and no partial at the perceived pitch to accidentally land on.'],
       ['YIN / pYIN', 'time', 'bad', 'Wrong', 'Same problem — the answer isn’t in the waveform’s repetition structure.'],
       ['Interpolated FFT', 'freq', 'bad', 'Octave(s) low', 'The lowest strong peak is the hum partial, one or two octaves below the strike note. Needs a dedicated bell mode (strike ≈ nominal ÷ 2).'],
-      ['Cepstrum', 'freq', 'bad', 'Fails', 'Bell partials are famously inharmonic; no even spacing.'],
+      ['Cepstrum', 'freq', 'bad', 'An octave adrift', 'Two spikes stand there: the hum’s period, and — marginally taller — its double. The cepstrum takes the taller one and answers 65 Hz. The note you actually hear is the strike note at 260 Hz, so a textbook octave error compounds into a gap two octaves wide. It found a real periodicity; simply not the one anybody listens to.'],
       ['CREPE', 'ml', 'risky', 'Coin flip', 'Interestingly, humans compute the strike note the way CREPE might have learned to — but nobody has verified it on bells.']
     ]
   }
