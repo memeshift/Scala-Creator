@@ -144,7 +144,9 @@
     display: block; font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600;
     letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-faint); margin-bottom: var(--space-2);
   }
-  input[type="text"], input[type="number"], textarea {
+  /* :where() keeps this matching but scores it 0 specificity, so it stays a base layer a
+     bare component class can override without qualifying itself against the type selector. */
+  :where(input[type="text"], input[type="number"], textarea) {
     background: var(--bg); border: 1px solid var(--border-strong); color: var(--fg);
     font-family: var(--font-serif); font-size: 1rem;
     padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); width: 100%;
@@ -153,7 +155,7 @@
   input:focus, textarea:focus { outline: none; border-color: var(--ring); box-shadow: var(--shadow-ring); }
   textarea { min-height: 5rem; resize: vertical; line-height: 1.55; }
   /* 5 digits ("20000") plus padding, border and the Chromium/Safari spinner buttons. */
-  input[type="number"] {
+  :where(input[type="number"]) {
     font-family: var(--font-sans); -moz-appearance: textfield;
     width: calc(5ch + var(--space-4) * 2 + 2px + 1.25rem);
   }
@@ -295,11 +297,9 @@
   .tone-root-btn:focus-visible { outline: none; box-shadow: var(--shadow-ring); }
   .tone-root-btn[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #1d1208; }
   .tone-row.failed .tone-hz { color: var(--danger-soft); }
-  /* Type+attribute selector on input[type="number"] outranks a bare class, so these
-     widths need the element qualifier to apply at all. Sized via calc because
-     box-sizing is border-box: the ch allowance must clear padding, border and the
-     spinner buttons Chromium/Safari render inside the field. */
-  input[type="number"].tone-override {
+  /* Sized via calc because box-sizing is border-box: the ch allowance must clear padding,
+     border and the spinner buttons Chromium/Safari render inside the field. */
+  .tone-override {
     font-family: var(--font-sans); font-size: 0.8rem; background: var(--bg);
     border: 1px solid var(--border-strong); color: var(--fg); padding: 4px 8px;
     border-radius: var(--radius-sm); width: calc(9ch + 18px + 1.25rem);
@@ -322,7 +322,7 @@
 
   .tone-hz-edit { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
   /* Widest value is toFixed(3) at the 20000 Hz ceiling: "20000.000", 9 chars. */
-  input[type="number"].tone-hz-input {
+  .tone-hz-input {
     font-family: var(--font-sans); font-size: 0.82rem; color: var(--orange-300);
     background: var(--bg); border: 1px solid var(--border-strong);
     padding: 4px 6px; border-radius: var(--radius-sm);
@@ -397,10 +397,7 @@
     display: flex; align-items: baseline; justify-content: center; gap: 6px;
     padding: var(--space-2) 0 0;
   }
-  /* Type selector needed: the generic input[type="text"] rule above is more specific than a bare
-     class, and would otherwise force 1rem, a --bg fill, a border and width:100% onto the readout.
-     Same reason input[type="number"].tone-hz-input is qualified. */
-  input[type="text"].hz-input {
+  .hz-input {
     /* Same clamp as the h1 rule, so the readout tracks the page title's scale and never exceeds it. */
     font-family: var(--font-serif); font-weight: 600;
     font-size: clamp(2rem, 3.4vw, 3rem);
@@ -414,8 +411,8 @@
                 border-color var(--dur-fast) var(--ease-out),
                 box-shadow var(--dur-fast) var(--ease-out);
   }
-  input[type="text"].hz-input:hover { border-color: var(--ring); }
-  input[type="text"].hz-input:focus {
+  .hz-input:hover { border-color: var(--ring); }
+  .hz-input:focus {
     outline: none; color: var(--primary);
     border-color: var(--ring); box-shadow: var(--shadow-ring);
   }
